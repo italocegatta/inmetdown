@@ -2,7 +2,6 @@
 #' Importa uma série de dados bruta do INMET de uma estação a partir do período
 #' especificado
 
-#' @importFrom magrittr %>%
 #' @export
 #'
 

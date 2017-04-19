@@ -16,8 +16,8 @@ aws_stations <- function() {
     key = rep(c("est", "text"), nrow(.) / 2)
   ) %>%
   tidyr::spread(key, x) %>%
-  transmute(
-    cod = gsub(".*-", "", gsub(".*<b>Estação:</b> |<br>.*", "", text)),
+  dplyr::transmute(
+    id = gsub(".*-", "", gsub(".*<b>Estação:</b> |<br>.*", "", text)),
     state = stringr::str_sub(gsub(".*label = '|';.*", "", text), 1, 2),
     city = stringr::str_extract(gsub(".*<b>Estação:</b> |<br>.*", "", text), ".*(?=-)"),
     lat = as.numeric(gsub(".*Latitude: |º<br>.*", "", text)),

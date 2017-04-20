@@ -13,6 +13,8 @@ devtools::install_github("italocegatta/inmetdown")
 Para consultar as estações cadastradas na base de dados, utilize a função `aws_stations()`.
 
 ``` r
+library(inmetdown)
+
 aws_stations()
 # A tibble: 530 × 9
       id state                      city        lat       lon   alt      start status

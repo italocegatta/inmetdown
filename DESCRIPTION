@@ -18,4 +18,5 @@ Imports: xml2,
     tidyr,
     lubridate,
     stringr,
-    padr
+    padr,
+    purrr

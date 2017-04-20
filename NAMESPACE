@@ -2,4 +2,4 @@
 
 export(aws_import)
 export(aws_stations)
-importFrom(magrittr,"%>%")
+importFrom(dplyr,"%>%")

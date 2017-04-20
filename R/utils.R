@@ -1,2 +1,2 @@
-#' @importFrom magrittr %>%
+#' @importFrom dplyr %>%
 NULL

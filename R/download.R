@@ -1,3 +1,17 @@
+#' Download de dados INMET
+#'
+#' Importa uma série de dados bruta do INMET de uma estação a partir do período
+#' especificado
+#'
+#' @export
+#'
+
+aws_import <- function(id, start, end, small = TRUE) {
+  purrr::map_df(
+    id, ~import(.x, start = start, end = end, small = small)
+  )
+}
+
 # Get URL's station
 aws_get_url <- function(id) {
   df <- aws_stations()
@@ -34,21 +48,6 @@ aws_try_query <- function(x) {
   },
   error=function(e) NULL,
   warning=function(w) NULL
-  )
-}
-
-
-#' Download de dados INMET
-#'
-#' Importa uma série de dados bruta do INMET de uma estação a partir do período
-#' especificado
-#'
-#' @export
-#'
-
-aws_import <- function(id, start, end, small = TRUE) {
-  purrr::map_df(
-    id, ~import(.x, start = start, end = end, small = small)
   )
 }
 
@@ -124,7 +123,7 @@ import <- function(id, start, end, small) {
           lubridate::ymd_hms(paste(data, paste0(hora, ":0:0")))
         }
       ,
-      rad = ifelse(rad < 0, 0, rad) / 1000
+      rad = ifelse(rad < 0, NA_real_, rad) / 1000
     ) %>%
     padr::pad() %>%
     dplyr::mutate(id = id) %>%

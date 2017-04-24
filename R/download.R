@@ -13,8 +13,8 @@ aws_import <- function(id, start, end, small = TRUE) {
 }
 
 # Get URL's station
-aws_get_url <- function(id) {
-  df <- aws_stations()
+get_url <- function(x, id) {
+  df <- inmet_stations(x = x)
   df[df$id %in% id, "url"][[1]]
 }
 
@@ -38,40 +38,26 @@ check_date <- function(x) {
   return(z)
 }
 
-aws_try_query <- function(x) {
-  tryCatch({
-    x %>%
-      rvest::html_nodes("table") %>%
-      `[[`(6) %>%
-      rvest::html_table(header = TRUE) %>%
-      `[`(-1, )
-  },
-  error=function(e) NULL,
-  warning=function(w) NULL
-  )
-}
-
-import <- function(id, start, end, small) {
+get_aws <- function(id, start, end, small) {
 
   # debug
   # "A108","16/02/17", "17/04/17"
-  # id = "A108"
+  # x = "aws"
+  # id = "A148"
   # start =  as.Date("2017-02-16")
   # end =  as.Date("2017-04-17")
   # load("R/sysdata.rda")
-  # library(magrittr)
 
   start <- check_date(start)
   end <- check_date(end)
 
-  session <- aws_get_url(id) %>%
-    rvest::html_session()
+  session <- rvest::html_session(get_url("aws", id))
 
-  img_cript <- session %>%
-    rvest::html_nodes("img") %>%
-    rvest::html_attr('src')
+  nodes_img <- rvest::html_nodes(session, "img")
 
-  code_cript <- img_cript %>% stringr::str_extract("(?<==)(.*?)(?==)")
+  img_cript <- rvest::html_attr(nodes_img, 'src')
+
+  code_cript <- stringr::str_extract(img_cript, "(?<==)(.*?)(?==)")
 
   p1 <- key[key$code == stringr::str_sub(code_cript, 1, 3), "key"][[1]]
   p2 <- key[key$code == stringr::str_sub(code_cript, 4, 6), "key"][[1]]
@@ -83,17 +69,24 @@ import <- function(id, start, end, small) {
     `aleaNum` = paste0(p1, p2)
   )
 
-  data <- suppressMessages(rvest::submit_form(session, form))
-
   x <- 0
   repeat {
+    data <- tryCatch(
+      {
+        suppressMessages(rvest::submit_form(session, form))
+      },
+      error=function(e) NULL,
+      warning=function(w) NULL
+    )
+
     x <- x + 1
-    table <- aws_try_query(data)
-    if (!is.null(table)) break
+    if (!is.null(data)) break
     if (x > 2) break
   }
 
-  rm(x)
+  nodes_table <- rvest::html_nodes(data, "table")[[6]]
+
+  table <- rvest::html_table(nodes_table, header = TRUE)[-1, ]
 
   if (is.null(table)) {
     table <- as.data.frame(matrix(NA_real_, nrow = 2, ncol = 19))
@@ -113,21 +106,26 @@ import <- function(id, start, end, small) {
     "p"
   )
 
-  z <- table %>%
-    tibble::as_tibble() %>%
-    dplyr::mutate_at(dplyr::vars(hora:p), as.double) %>%
-    dplyr::mutate(
-      data = if (is.character(data)) {
-          lubridate::dmy_hms(paste(data, paste0(hora, ":0:0")))
-        } else {
-          lubridate::ymd_hms(paste(data, paste0(hora, ":0:0")))
-        }
-      ,
-      rad = ifelse(rad < 0, NA_real_, rad) / 1000
-    ) %>%
-    padr::pad() %>%
-    dplyr::mutate(id = id) %>%
-    dplyr::select(id, dplyr::everything(), -hora)
+  table <- dplyr::mutate_at(table, dplyr::vars(hora:p), as.double)
+
+  table <- dplyr::mutate(
+    table,
+    data = if (is.character(data)) {
+      lubridate::dmy_hms(paste(data, paste0(hora, ":0:0")))
+    } else {
+      lubridate::ymd_hms(paste(data, paste0(hora, ":0:0")))
+    }
+    ,
+    rad = ifelse(rad < 0, NA_real_, rad) / 1000
+  )
+
+  table <- padr::pad(table)
+
+  table <- dplyr::mutate(table, id = id)
+
+  table <- dplyr::select(table, id, dplyr::everything(), -hora)
+
+  z <- dplyr::as_data_frame(table)
 
   if (small) {
     z <- z %>%
@@ -136,5 +134,3 @@ import <- function(id, start, end, small) {
 
   return(z)
 }
-
-

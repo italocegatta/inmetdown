@@ -2,4 +2,5 @@
 
 export(aws_import)
 export(aws_stations)
+export(cws_stations)
 importFrom(dplyr,"%>%")

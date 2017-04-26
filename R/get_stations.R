@@ -1,10 +1,21 @@
-#' Get basic information about INMET's weather station
-#'
-#' This function searches the stations registered in the INMET database.
+#' Get basic information about INMET's automatic weather station
 #'
 #' @export
 #'
-inmet_stations <- function(x = c("aws", "cws")) {
+aws_stations <- function() {
+  get_stations("aws")
+}
+
+#' Get basic information about INMET's conventional weather station
+#'
+#' @export
+#'
+cws_stations <- function() {
+  get_stations("cws")
+}
+
+# Função generica para pesquisar estações
+get_stations <- function(x) {
 
   if (x == "aws") {
     url <- "http://www.inmet.gov.br/sonabra/maps/pg_mapa.php"
@@ -22,9 +33,9 @@ inmet_stations <- function(x = c("aws", "cws")) {
 
   df_messy <- tidytext::unnest_tokens(
     dplyr::as_data_frame(nodes_text),
-    x,
-    value,
-    token = stringr::str_split, pattern = "\\*", to_lower = FALSE
+    x, value,
+    token = stringr::str_split, pattern = "\\*",
+    to_lower = FALSE
   )
 
   df_key <- dplyr::mutate(
@@ -38,7 +49,11 @@ inmet_stations <- function(x = c("aws", "cws")) {
     key, x
   )[-1, ]
 
-  id <- gsub(".*OMM:</b> |<br>.*", "", df_tidy$text)
+  if (x == "aws") {
+    id <- stringr::str_sub(df_tidy$est, 10, 13)
+  } else {
+    id <- gsub(".*OMM:</b> |<br>.*", "", df_tidy$text)
+  }
 
   state <- stringr::str_sub(gsub(".*label = '|';.*", "", df_tidy$text), 1, 2)
 

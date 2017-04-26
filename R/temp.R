@@ -2,16 +2,15 @@
 get_cws <- function(x, id, start, end, small) {
 
   # debug
-  x = "cws"
-  id =
-  start =  as.Date("2017-02-16")
-  end =  as.Date("2017-04-17")
+  id = "82915"
+  start =  Sys.Date()
+  end =  Sys.Date()
   load("R/sysdata.rda")
 
   start <- check_date(start)
   end <- check_date(end)
 
-  session <- rvest::html_session(get_url(x, id))
+  session <- rvest::html_session(get_url("cws", id))
 
   nodes_img <- rvest::html_nodes(session, "img")
 
@@ -44,7 +43,7 @@ get_cws <- function(x, id, start, end, small) {
     if (x > 2) break
   }
 
-  nodes_table <- rvest::html_nodes(data, "table")[[6]]
+  nodes_table <- rvest::html_nodes(data, "table")[[7]]
 
   table <- rvest::html_table(nodes_table, header = TRUE)[-1, ]
 
@@ -57,16 +56,17 @@ get_cws <- function(x, id, start, end, small) {
   names(table) <- c(
     "data",
     "hora",
-    "t_ins",  "t_max", "t_min",
-    "ur_ins", "ur_max", "ur_min",
-    "pto_orv_ins", "pto_orv_max", "pto_orv_min",
-    "pa_int", "pa_max", "pa_min",
-    "v_vel", "ento_dir", "v_raj",
-    "rad",
+    "temp",
+    "ur",
+    "pa",
+    "v_vel", "v_dir",
+    "nebul",
+    "insol",
+    "t_max", "t_min",
     "p"
   )
 
-  table <- dplyr::mutate_at(table, dplyr::vars(hora:p), as.double)
+  table <- suppressWarnings(dplyr::mutate_at(table, dplyr::vars(hora:p), as.double))
 
   table <- dplyr::mutate(
     table,
@@ -75,22 +75,17 @@ get_cws <- function(x, id, start, end, small) {
     } else {
       lubridate::ymd_hms(paste(data, paste0(hora, ":0:0")))
     }
-    ,
-    rad = ifelse(rad < 0, NA_real_, rad) / 1000
   )
 
-  table <- padr::pad(table)
+  # teste para garantir 3 medições por dia
+  # precisa de pad??
+  # table <- padr::pad(table)
 
   table <- dplyr::mutate(table, id = id)
 
   table <- dplyr::select(table, id, dplyr::everything(), -hora)
 
   z <- dplyr::as_data_frame(table)
-
-  if (small) {
-    z <- z %>%
-      dplyr::select(id, data, t_max, t_min, ur_max, ur_min, rad, p)
-  }
 
   return(z)
 }

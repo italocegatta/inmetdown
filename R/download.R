@@ -107,8 +107,7 @@ get_aws <- function(id, start, end, small) {
 
   names(table) <- c(
     "data",
-
-       "hora",
+    "hora",
     "t_ins",  "t_max", "t_min",
     "ur_ins", "ur_max", "ur_min",
     "pto_orv_ins", "pto_orv_max", "pto_orv_min",
@@ -118,7 +117,7 @@ get_aws <- function(id, start, end, small) {
     "p"
   )
 
-  table <- dplyr::mutate_at(table, dplyr::vars(hora:p), as.double)
+  table <- suppressWarnings(dplyr::mutate_at(table, dplyr::vars(hora:p), as.double))
 
   table <- dplyr::mutate(
     table,
@@ -130,6 +129,9 @@ get_aws <- function(id, start, end, small) {
     ,
     rad = ifelse(rad < 0, NA_real_, rad) / 1000
   )
+
+  # testar se o ultimo valor é o ultimo horario possivel mesmo para
+  # garantir o pad adequado
 
   table <- padr::pad(table)
 

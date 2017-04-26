@@ -1,62 +1,17 @@
-#' Download de dados INMET
-#'
-#' Importa uma série de dados bruta do INMET de uma estação a partir do período
-#' especificado
-#'
-#' @export
-#'
 
-aws_import <- function(id, start, end, small = TRUE) {
-  purrr::map_df(
-    id, ~get_aws(.x, start = start, end = end, small = small)
-  )
-}
-
-# Get URL's station
-get_url <- function(x, id) {
-  df <- get_stations(x = x)
-
-  aux <- df$id %in% id
-
-  if (!any(aux)) stop(sprintf("'%s' station not fund.", id))
-
-  df[aux, "url"][[1]]
-}
-
-check_date <- function(x) {
-  if (!lubridate::is.Date(x)) {
-    test1 <- tryCatch(lubridate::dmy(x), warning=function(w) w)
-    if (!any((class(test1) == "warning") == TRUE)) {
-      z <- test1
-    } else {
-      test2 <- tryCatch(lubridate::ymd(x), warning=function(w) w)
-      if (lubridate::is.Date(test2)) {
-        z <- test2
-      } else {
-        stop("All formats failed to parse. No formats found.")
-      }
-    }
-  } else {
-    z <- x
-  }
-
-  return(z)
-}
-
-get_aws <- function(id, start, end, small) {
+get_cws <- function(x, id, start, end, small) {
 
   # debug
-  # "A108","16/02/17", "17/04/17"
-  # x = "aws"
-  # id = "A108"
-  # start =  Sys.Date()
-  # end =  Sys.Date()
-  # load("R/sysdata.rda")
+  x = "cws"
+  id =
+  start =  as.Date("2017-02-16")
+  end =  as.Date("2017-04-17")
+  load("R/sysdata.rda")
 
   start <- check_date(start)
   end <- check_date(end)
 
-  session <- rvest::html_session(get_url("aws", id))
+  session <- rvest::html_session(get_url(x, id))
 
   nodes_img <- rvest::html_nodes(session, "img")
 
@@ -82,33 +37,26 @@ get_aws <- function(id, start, end, small) {
       },
       error=function(e) NULL,
       warning=function(w) NULL
-    )
+      )
 
     x <- x + 1
     if (!is.null(data)) break
     if (x > 2) break
   }
 
-  nodes_table  <- try(rvest::html_nodes(data, "table")[[6]], silent = TRUE)
+  nodes_table <- rvest::html_nodes(data, "table")[[6]]
 
-  if (inherits(nodes_table, "try-error")) {
+  table <- rvest::html_table(nodes_table, header = TRUE)[-1, ]
+
+  if (is.null(table)) {
     table <- as.data.frame(matrix(NA_real_, nrow = 2, ncol = 19))
     table[, 1] <- c(start, end)
-
-    if (end == Sys.Date()) {
-      table[, 2] <- c(0, lubridate::hour(Sys.time()))
-    } else {
-      table[, 2] <- c(0, 23)
-    }
-
-  } else {
-    table <- rvest::html_table(nodes_table, header = TRUE)[-1, ]
+    table[, 2] <- c(0, 23)
   }
 
   names(table) <- c(
     "data",
-
-       "hora",
+    "hora",
     "t_ins",  "t_max", "t_min",
     "ur_ins", "ur_max", "ur_min",
     "pto_orv_ins", "pto_orv_max", "pto_orv_min",
@@ -146,3 +94,5 @@ get_aws <- function(id, start, end, small) {
 
   return(z)
 }
+
+

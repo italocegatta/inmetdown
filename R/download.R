@@ -8,14 +8,19 @@
 
 aws_import <- function(id, start, end, small = TRUE) {
   purrr::map_df(
-    id, ~import(.x, start = start, end = end, small = small)
+    id, ~get_aws(.x, start = start, end = end, small = small)
   )
 }
 
 # Get URL's station
 get_url <- function(x, id) {
-  df <- inmet_stations(x = x)
-  df[df$id %in% id, "url"][[1]]
+  df <- get_stations(x = x)
+
+  aux <- df$id %in% id
+
+  if (!any(aux)) stop(sprintf("'%s' station not fund.", id))
+
+  df[aux, "url"][[1]]
 }
 
 check_date <- function(x) {
@@ -43,9 +48,9 @@ get_aws <- function(id, start, end, small) {
   # debug
   # "A108","16/02/17", "17/04/17"
   # x = "aws"
-  # id = "A148"
-  # start =  as.Date("2017-02-16")
-  # end =  as.Date("2017-04-17")
+  # id = "A108"
+  # start =  Sys.Date() - 5
+  # end =  Sys.Date() - 5
   # load("R/sysdata.rda")
 
   start <- check_date(start)
@@ -84,14 +89,14 @@ get_aws <- function(id, start, end, small) {
     if (x > 2) break
   }
 
-  nodes_table <- rvest::html_nodes(data, "table")[[6]]
+  nodes_table  <- try(rvest::html_nodes(data, "table")[[6]], silent = TRUE)
 
-  table <- rvest::html_table(nodes_table, header = TRUE)[-1, ]
-
-  if (is.null(table)) {
+  if (inherits(nodes_table, "try-error")) {
     table <- as.data.frame(matrix(NA_real_, nrow = 2, ncol = 19))
     table[, 1] <- c(start, end)
-    table[, 2] <- c(0, 23)
+    table[, 2] <- c(0, 23) # limitar as linhas até o momento da consulta, não o dia inteiro
+  } else {
+    table <- rvest::html_table(nodes_table, header = TRUE)[-1, ]
   }
 
   names(table) <- c(

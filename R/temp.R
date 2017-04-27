@@ -1,14 +1,15 @@
 
-get_cws <- function(x, id, start, end, small) {
+get_cws <- function(id, start, end) {
 
   # debug
-  id = "82915"
-  start =  Sys.Date()
-  end =  Sys.Date()
-  load("R/sysdata.rda")
+  id = "82067"
+  # start =  Sys.Date() - 5
+  # end =  Sys.Date()
+  # load("R/sysdata.rda")
 
   start <- check_date(start)
   end <- check_date(end)
+  n_row <- as.numeric(end - start + 1) * 3
 
   session <- rvest::html_session(get_url("cws", id))
 
@@ -34,8 +35,8 @@ get_cws <- function(x, id, start, end, small) {
       {
         suppressMessages(rvest::submit_form(session, form))
       },
-      error=function(e) NULL,
-      warning=function(w) NULL
+      error = function(e) NULL,
+      warning = function(w) NULL
       )
 
     x <- x + 1
@@ -43,25 +44,34 @@ get_cws <- function(x, id, start, end, small) {
     if (x > 2) break
   }
 
-  nodes_table <- rvest::html_nodes(data, "table")[[7]]
+  nodes_table  <- try(rvest::html_nodes(data, "table")[[7]], silent = TRUE)
 
-  table <- rvest::html_table(nodes_table, header = TRUE)[-1, ]
+  if (inherits(nodes_table, "try-error")) {
+    table <- as.data.frame(matrix(NA_real_, nrow = n_row, ncol = 12))
+    table[ , 1] <- rep(seq(start, end, by = "day"), each = 3)
+    table[ , 2] <- c(0, 12, 18)
 
-  if (is.null(table)) {
-    table <- as.data.frame(matrix(NA_real_, nrow = 2, ncol = 19))
-    table[, 1] <- c(start, end)
-    table[, 2] <- c(0, 23)
+    if (end == Sys.Date()) {
+      ## filtrar hora maior que hora do sistema
+      table$V2[(nrow(table)-2:nrow(table))]
+
+      table[nrow(table):(nrow(table)-3), ]
+
+      table[table$V1 == end | table$V1 <= lubridate::hour(Sys.time()), ]
+      table[, 2] <- c(0, 12, 18)
+    } else {
+      table[, 2] <- c(0, 18)
+    }
+
+  } else {
+    table <- rvest::html_table(nodes_table, header = TRUE)[-1, ]
   }
 
   names(table) <- c(
-    "data",
-    "hora",
-    "temp",
-    "ur",
-    "pa",
+    "data", "hora",
+    "temp", "ur", "pa",
     "v_vel", "v_dir",
-    "nebul",
-    "insol",
+    "nebul","insol",
     "t_max", "t_min",
     "p"
   )
@@ -77,9 +87,11 @@ get_cws <- function(x, id, start, end, small) {
     }
   )
 
-  # teste para garantir 3 medições por dia
-  # precisa de pad??
-  # table <- padr::pad(table)
+  if (nrow(table) != as.numeric(end - start + 1) * 3) {
+    table <- padr::pad(table)
+
+    table <- table[table$hora %in% c(0, 12, 18), ]
+  }
 
   table <- dplyr::mutate(table, id = id)
 
@@ -90,4 +102,9 @@ get_cws <- function(x, id, start, end, small) {
   return(z)
 }
 
-
+print(cws_stations(), n= 15)
+x <- cws_stations()$id
+w <- list()
+for (i in x) {
+  w[i] <- cws_import(i, Sys.Date()-30, Sys.Date())
+}

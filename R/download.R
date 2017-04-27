@@ -12,6 +12,12 @@ aws_import <- function(id, start, end, small = TRUE) {
   )
 }
 
+cws_import <- function(id, start, end) {
+  purrr::map_df(
+    id, ~get_cws(.x, start = start, end = end)
+  )
+}
+
 # Get URL's station
 get_url <- function(x, id) {
   df <- get_stations(x = x)

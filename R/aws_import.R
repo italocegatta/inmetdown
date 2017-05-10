@@ -5,48 +5,10 @@
 #'
 #' @export
 #'
-
 aws_import <- function(id, start = Sys.Date(), end = Sys.Date(), small = TRUE) {
   purrr::map_df(
     id, ~get_aws(.x, start = start, end = end, small = small)
   )
-}
-
-cws_import <- function(id, start = Sys.Date(), end = Sys.Date()) {
-  purrr::map_df(
-    id, ~get_cws(.x, start = start, end = end)
-  )
-}
-
-# Get URL's station
-get_url <- function(x, id) {
-  df <- get_stations(x = x)
-
-  aux <- df$id %in% id
-
-  if (!any(aux)) stop(sprintf("'%s' station not fund.", id))
-
-  df[aux, "url"][[1]]
-}
-
-check_date <- function(x) {
-  if (!lubridate::is.Date(x)) {
-    test1 <- tryCatch(lubridate::dmy(x), warning=function(w) w)
-    if (!any((class(test1) == "warning") == TRUE)) {
-      z <- test1
-    } else {
-      test2 <- tryCatch(lubridate::ymd(x), warning=function(w) w)
-      if (lubridate::is.Date(test2)) {
-        z <- test2
-      } else {
-        stop("All formats failed to parse to date. No formats found.")
-      }
-    }
-  } else {
-    z <- x
-  }
-
-  return(z)
 }
 
 get_aws <- function(id, start, end, small) {
@@ -104,7 +66,7 @@ get_aws <- function(id, start, end, small) {
     table[, 1] <- c(start, end)
 
     if (end == Sys.Date()) {
-      table[, 2] <- c(0, lubridate::hour(Sys.time()))
+      table[, 2] <- c(0, end_hour)
     } else {
       table[, 2] <- c(0, 23)
     }

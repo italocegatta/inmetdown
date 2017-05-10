@@ -67,7 +67,7 @@ get_stations <- function(x) {
 
   start <- lubridate::dmy(gsub(".*Aberta em: |<br>.*", "", df_tidy$text))
 
-  status <- ifelse(stringr::str_detect(gsub(".*mm_20_|.png.*", "", df_tidy$text), "cinza"), "On", "Off")
+  #status <- ifelse(stringr::str_detect(gsub(".*mm_20_|.png.*", "", df_tidy$text), "cinza"), "On", "Off")
 
   if (x == "aws") {
     url <- gsub(".*width=50><a href=| target=_new>.*",  "", df_tidy$text)
@@ -76,7 +76,7 @@ get_stations <- function(x) {
   }
 
   z <- dplyr::data_frame(
-    id, state, city, lat, lon, alt, start, status, url
+    id, state, city, lat, lon, alt, start, url
   )
 
   return(z)

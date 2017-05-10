@@ -6,13 +6,13 @@
 #' @export
 #'
 
-aws_import <- function(id, start, end, small = TRUE) {
+aws_import <- function(id, start = Sys.Date(), end = Sys.Date(), small = TRUE) {
   purrr::map_df(
     id, ~get_aws(.x, start = start, end = end, small = small)
   )
 }
 
-cws_import <- function(id, start, end) {
+cws_import <- function(id, start = Sys.Date(), end = Sys.Date()) {
   purrr::map_df(
     id, ~get_cws(.x, start = start, end = end)
   )
@@ -39,7 +39,7 @@ check_date <- function(x) {
       if (lubridate::is.Date(test2)) {
         z <- test2
       } else {
-        stop("All formats failed to parse. No formats found.")
+        stop("All formats failed to parse to date. No formats found.")
       }
     }
   } else {
@@ -51,18 +51,20 @@ check_date <- function(x) {
 
 get_aws <- function(id, start, end, small) {
 
-  # debug
-  # "A108","16/02/17", "17/04/17"
-  # x = "aws"
-  # id = "A108"
-  # start =  Sys.Date()
-  # end =  Sys.Date()
-  # load("R/sysdata.rda")
-
   start <- check_date(start)
   end <- check_date(end)
 
-  session <- rvest::html_session(get_url("aws", id))
+  if (end == Sys.Date()) {
+    end_hour <- lubridate::ymd_hms(
+      paste(end, paste0(lubridate::hour(lubridate::now("UTC"))-1, ":0:0"))
+    )
+  } else {
+    end_hour <-  lubridate::ymd_hms(paste(end, paste0(23, ":0:0")))
+  }
+
+  session <- suppressWarnings(
+    rvest::html_session(get_url("aws", id))
+  )
 
   nodes_img <- rvest::html_nodes(session, "img")
 
@@ -112,45 +114,51 @@ get_aws <- function(id, start, end, small) {
   }
 
   names(table) <- c(
-    "data",
-    "hora",
+    "date",
+    "hour",
     "t_ins",  "t_max", "t_min",
-    "ur_ins", "ur_max", "ur_min",
-    "pto_orv_ins", "pto_orv_max", "pto_orv_min",
-    "pa_int", "pa_max", "pa_min",
-    "v_vel", "ento_dir", "v_raj",
+    "rh_ins", "rh_max", "rh_min",
+    "dp_ins", "dp_max", "dp_min",
+    "ap_ins", "ap_max", "ap_min",
+    "ws", "wd", "wg",
     "rad",
-    "p"
+    "prec"
   )
 
-  table <- suppressWarnings(dplyr::mutate_at(table, dplyr::vars(hora:p), as.double))
+  table <- suppressWarnings(
+    dplyr::mutate_at(table, dplyr::vars(hour:prec), as.double)
+  )
 
   table <- dplyr::mutate(
     table,
-    data = if (is.character(data)) {
-      lubridate::dmy_hms(paste(data, paste0(hora, ":0:0")))
+    date = if (is.character(date)) {
+      lubridate::dmy_hms(paste(date, paste0(hour, ":0:0")))
     } else {
-      lubridate::ymd_hms(paste(data, paste0(hora, ":0:0")))
+      lubridate::ymd_hms(paste(date, paste0(hour, ":0:0")))
     }
     ,
     rad = ifelse(rad < 0, NA_real_, rad) / 1000
   )
 
-  # testar se o ultimo valor é o ultimo horario possivel mesmo para
-  # garantir o pad adequado
+  if (table$date[nrow(table)] != end_hour) {
+    table <- dplyr::add_row(table, date = end_hour)
+  }
 
   table <- padr::pad(table)
 
   table <- dplyr::mutate(table, id = id)
 
-  table <- dplyr::select(table, id, dplyr::everything(), -hora)
+  table <- dplyr::select(table, id, dplyr::everything(), -hour)
 
   z <- dplyr::as_data_frame(table)
 
   if (small) {
-    z <- z %>%
-      dplyr::select(id, data, t_max, t_min, ur_max, ur_min, rad, p)
+    z <- dplyr::select(
+      z,
+      id, date, t_max, t_min, rh_max, rh_min,
+      rad, prec, ap_ins, ws, wg, wd
+    )
   }
-
   return(z)
 }
+

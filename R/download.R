@@ -159,6 +159,7 @@ get_aws <- function(id, start, end, small) {
       rad, prec, ap_ins, ws, wg, wd
     )
   }
+
   return(z)
 }
 

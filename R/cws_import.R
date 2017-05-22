@@ -92,7 +92,7 @@ get_cws <- function(id, start, end) {
   )
 
   if (nrow(table) != as.numeric(end - start + 1) * 3) {
-    table <- padr::pad(table)
+    table <- suppressMessages(padr::pad(table, interval = "hour"))
 
     table <- table[lubridate::hour(table$date) %in% c(0, 12, 18), ]
   }

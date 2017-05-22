@@ -106,7 +106,7 @@ get_aws <- function(id, start, end, small) {
     table <- dplyr::add_row(table, date = end_hour)
   }
 
-  table <- padr::pad(table)
+  table <- suppressMessages(padr::pad(table, interval = "hour"))
 
   table <- dplyr::mutate(table, id = id)
 

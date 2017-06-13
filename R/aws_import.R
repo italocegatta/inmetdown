@@ -66,7 +66,7 @@ get_aws <- function(id, start, end, small) {
     table[, 1] <- c(start, end)
 
     if (end == Sys.Date()) {
-      table[, 2] <- c(0, end_hour)
+      table[, 2] <- c(0, lubridate::hour(end_hour))
     } else {
       table[, 2] <- c(0, 23)
     }

@@ -117,8 +117,14 @@ get_aws <- function(id, start, end, small) {
   if (small) {
     z <- dplyr::select(
       z,
-      id, date, t_max, t_min, rh_max, rh_min,
-      rad, prec, ap_ins, ws, wg, wd
+      id, date,
+      t_max, t_min,
+      rh_max, rh_min,
+      dp_max, dp_min,
+      ap_max, ap_min,
+      ws, wg, wd,
+      rad,
+      prec
     )
   }
 

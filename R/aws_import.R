@@ -56,7 +56,7 @@ get_aws <- function(id, start, end, small) {
 
     x <- x + 1
     if (!is.null(data)) break
-    if (x > 10) break
+    if (x > 15) break
   }
 
   nodes_table  <- try(rvest::html_nodes(data, "table")[[6]], silent = TRUE)

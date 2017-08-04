@@ -2,8 +2,8 @@
 #'
 #' @export
 #'
-aws_stations <- function() {
-  get_stations("aws")
+aws_stations <- function(only.br = TRUE) {
+  get_stations("aws", only.br = only.br)
 }
 
 #' Get basic information about INMET's conventional weather station
@@ -15,7 +15,7 @@ cws_stations <- function() {
 }
 
 # Função generica para pesquisar estações
-get_stations <- function(x) {
+get_stations <- function(x, only.br = NULL) {
 
   if (x == "aws") {
     url <- "http://www.inmet.gov.br/sonabra/maps/pg_mapa.php"
@@ -79,7 +79,11 @@ get_stations <- function(x) {
     id, state, city, lat, lon, alt, start, url
   )
 
-  return(z)
+  if (only.br == TRUE) {
+    z <- dplyr::filter(z, !stringr::str_detect(id, "[UC]"))
+  }
+
+  z
 }
 
 # Get URL's station

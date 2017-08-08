@@ -15,7 +15,7 @@ cws_stations <- function() {
 }
 
 # Função generica para pesquisar estações
-get_stations <- function(x, only.br = NULL) {
+get_stations <- function(x, only.br = TRUE) {
 
   if (x == "aws") {
     url <- "http://www.inmet.gov.br/sonabra/maps/pg_mapa.php"
@@ -79,7 +79,7 @@ get_stations <- function(x, only.br = NULL) {
     id, state, city, lat, lon, alt, start, url
   )
 
-  if (only.br == TRUE) {
+  if (isTRUE(only.br)) {
     z <- dplyr::filter(z, !stringr::str_detect(id, "[UC]"))
   }
 

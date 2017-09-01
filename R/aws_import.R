@@ -5,34 +5,27 @@
 #'
 #' @export
 #'
-aws_import <- function(id, start = Sys.Date(), end = Sys.Date(), small = TRUE) {
-  purrr::map_df(
-    id, ~get_aws(.x, start = start, end = end, small = small)
-  )
-}
+aws_import <- function(id, start, end, small = TRUE) {
+  ## testar valores unicos
+  id = dplyr::enquo(id)
 
-get_aws <- function(id, start, end, small) {
+  stations <- aws_station() %>%
+    dplyr::filter(id %in% !!id)
 
   start <- check_date(start)
   end <- check_date(end)
-
-  if (end == Sys.Date()) {
-    end_hour <- lubridate::ymd_hms(
-      paste(end, paste0(lubridate::hour(lubridate::now("UTC"))-1, ":0:0"))
-    )
-  } else {
-    end_hour <-  lubridate::ymd_hms(paste(end, paste0(23, ":0:0")))
-  }
-
-  session <- suppressWarnings(
-    rvest::html_session(get_url("aws", id))
+  end_hour <- ifelse(
+    end == Sys.Date(),
+    lubridate::hour(lubridate::now("UTC"))-1,
+    23
   )
 
-  nodes_img <- rvest::html_nodes(session, "img")
+  session <- suppressWarnings(rvest::html_session(stations$url))
 
-  img_cript <- rvest::html_attr(nodes_img, 'src')
-
-  code_cript <- stringr::str_extract(img_cript, "(?<==)(.*?)(?==)")
+  code_cript <- session %>%
+    rvest::html_nodes("img") %>%
+    rvest::html_attr('src') %>%
+    stringr::str_extract("(?<==)(.*?)(?==)")
 
   p1 <- key[key$code == stringr::str_sub(code_cript, 1, 3), "key"][[1]]
   p2 <- key[key$code == stringr::str_sub(code_cript, 4, 6), "key"][[1]]
@@ -66,7 +59,7 @@ get_aws <- function(id, start, end, small) {
     table[, 1] <- c(start, end)
 
     if (end == Sys.Date()) {
-      table[, 2] <- c(0, lubridate::hour(end_hour))
+      table[, 2] <- c(0, end_hour)
     } else {
       table[, 2] <- c(0, 23)
     }
@@ -87,47 +80,48 @@ get_aws <- function(id, start, end, small) {
     "prec"
   )
 
-  table <- suppressWarnings(
-    dplyr::mutate_at(table, dplyr::vars(hour:prec), as.double)
-  )
+  table <- suppressWarnings(dplyr::mutate_at(table, dplyr::vars(hour:prec), as.double))
 
+  # quando esta tudo NA cria data, do contrario vem como caractere precia converter
   table <- dplyr::mutate(
     table,
-    date = if (is.character(date)) {
-      lubridate::dmy_hms(paste(date, paste0(hour, ":0:0")))
-    } else {
-      lubridate::ymd_hms(paste(date, paste0(hour, ":0:0")))
-    }
-    ,
-    rad = ifelse(rad < 0, NA_real_, rad) / 1000
+    date = as.Date(ifelse(is.character(date), lubridate::dmy(date), date),  origin = "1970-01-01"),
+    rad = ifelse(rad < 0, NA_real_, rad) / 1000,
+    date_time = lubridate::ymd_hms(paste0(end, "-", hour, ":0:0"))
   )
 
-  if (table$date[nrow(table)] != end_hour) {
-    table <- dplyr::add_row(table, date = end_hour)
+  if (max(table$date_time) < lubridate::ymd_hms(paste0(end, "-", end_hour, ":0:0"))) {
+    table <- dplyr::add_row(table, date = end, hour = end_hour)
   }
 
-  table <- suppressMessages(padr::pad(table, interval = "hour"))
-
-  table <- dplyr::mutate(table, id = id)
-
-  table <- dplyr::select(table, id, dplyr::everything(), -hour)
-
-  z <- dplyr::as_data_frame(table)
+  table <-  table %>%
+    {suppressMessages(padr::pad(., by = "date_time", interval = "hour"))} %>%
+    dplyr::mutate(
+      id = !!id,
+      date = lubridate::date(date_time),
+      hour = lubridate::hour(date_time)
+    ) %>%
+    dplyr::select(id, dplyr::everything(), -date_time) %>%
+    dplyr::as_data_frame()
 
   if (small) {
-    z <- dplyr::select(
-      z,
-      id, date,
-      t_max, t_min,
-      rh_max, rh_min,
-      dp_max, dp_min,
-      ap_max, ap_min,
-      ws, wg, wd,
-      rad,
-      prec
+    table <- dplyr::select(
+      table,
+      -dplyr::ends_with("_ins")
     )
   }
 
-  return(z)
+  table
 }
 
+# library(magrittr)
+# library(inmetdown)
+# source("R/check_date.R")
+# load("R/sysdata.rda")
+# id = "A137" # id = "A104"
+#
+# start =  Sys.Date()
+# end =  Sys.Date()
+# small = TRUE
+#
+# aws_import2( "A303",Sys.Date(), Sys.Date() )

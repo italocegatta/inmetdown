@@ -88,25 +88,31 @@ aws_import <- function(id, start, end, small = TRUE) {
     table <- suppressWarnings(dplyr::mutate_at(table, dplyr::vars(hour:prec), as.double))
 
     # quando esta tudo NA cria data, do contrario vem como caractere precia converter
-    table <- dplyr::mutate(
-      table,
-      date = as.Date(ifelse(is.character(date), lubridate::dmy(date), date),  origin = "1970-01-01"),
-      rad = ifelse(rad < 0, NA_real_, rad) / 1000,
-      date_time = lubridate::ymd_hms(paste0(end, "-", hour, ":0:0"))
-    )
+    table <- table %>%
+      dplyr::rowwise() %>%
+      dplyr::mutate(
+        date = as.Date(ifelse(is.character(date), lubridate::dmy(date), date),  origin = "1970-01-01"),
+        rad = ifelse(rad < 0, NA_real_, rad) / 1000,
+        date_time = lubridate::ymd_hms(paste0(date, "-", hour, ":0:0"))
+      ) %>%
+      dplyr::ungroup()
 
     if (max(table$date_time) < lubridate::ymd_hms(paste0(end, "-", end_hour, ":0:0"))) {
       table <- dplyr::add_row(table, date = end, hour = end_hour)
     }
 
+    range_dttm <- range(table$date_time)
+    seq_dttm <- data.frame(date_time = seq.POSIXt(range_dttm[1], range_dttm[2], 'hour'))
+
     table <-  table %>%
-      {suppressMessages(padr::pad(., by = "date_time", interval = "hour"))} %>%
+      dplyr::full_join(seq_dttm, by = "date_time") %>%
       dplyr::mutate(
-        id = stations$id[1],
+        id = stations$id[i],
         date = lubridate::date(date_time),
         hour = lubridate::hour(date_time)
       ) %>%
       dplyr::select(id, dplyr::everything(), -date_time) %>%
+      dplyr::arrange(id, date, hour) %>%
       dplyr::as_data_frame()
 
     if (small) {
@@ -122,14 +128,16 @@ aws_import <- function(id, start, end, small = TRUE) {
   dplyr::bind_rows(out)
 }
 
+# Debug
 # library(magrittr)
 # library(inmetdown)
 # source("R/check_date.R")
 # load("R/sysdata.rda")
 # id = c("A137", "A104")
 #
-# start =  Sys.Date()
+# start =  Sys.Date() -1
 # end =  Sys.Date()
 # small = TRUE
 #
-# aws_import2( "A303",Sys.Date(), Sys.Date() )
+# aws_import( "A303",Sys.Date(), Sys.Date() )
+# xx <- aws_import(c("A137", "A104", "A032"), Sys.Date() - 1, Sys.Date())

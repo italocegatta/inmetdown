@@ -6,102 +6,67 @@
 #' @export
 #'
 cws_import <- function(id, start = Sys.Date(), end = Sys.Date()) {
-  purrr::map_df(
-    id, ~get_cws(.x, start = start, end = end)
-  )
-}
-
-get_cws <- function(id, start, end) {
 
   start <- check_date(start)
   end <- check_date(end)
+
   n_row <- as.numeric(end - start + 1) * 3
   t <- lubridate::hour(lubridate::now("UTC"))
 
-  session <- suppressWarnings(
-    rvest::html_session(get_url("cws", id))
-  )
+  stations <- cws_station() %>%
+    dplyr::filter(id %in% !!id)
 
-  nodes_img <- rvest::html_nodes(session, "img")
+  seq <- seq_along(stations$id)
+  out <- vector("list", length(seq))
+  for (i in seq) {
 
-  img_cript <- rvest::html_attr(nodes_img, 'src')
+    session <- suppressWarnings(rvest::html_session(stations$url[i]))
 
-  code_cript <- stringr::str_extract(img_cript, "(?<==)(.*?)(?==)")
+    form <- get_form(session, start, end)
 
-  p1 <- key[key$code == stringr::str_sub(code_cript, 1, 3), "key"][[1]]
-  p2 <- key[key$code == stringr::str_sub(code_cript, 4, 6), "key"][[1]]
+    data <- get_data(session, form)
 
-  form <- rvest::set_values(
-    rvest::html_form(session)[[1]],
-    `dtaini` = format(start, "%d/%m/%Y"),
-    `dtafim` = format(end, "%d/%m/%Y"),
-    `aleaNum` = paste0(p1, p2)
-  )
+    nodes_table  <- try(rvest::html_nodes(data, "table")[[7]], silent = TRUE)
 
-  x <- 0
-  repeat {
-    data <- tryCatch(
-      {
-        suppressMessages(rvest::submit_form(session, form))
-      },
-      error = function(e) NULL,
-      warning = function(w) NULL
-      )
+    table <- get_table_cws(nodes_table, start, end, n_row)
 
-    x <- x + 1
-    if (!is.null(data)) break
-    if (x > 2) break
-  }
+    names(table) <- c(
+      "date", "hour",
+      "t", "rh", "ap",
+      "ws", "wd",
+      "neb","ins",
+      "t_max", "t_min",
+      "prec"
+    )
 
-  nodes_table  <- try(rvest::html_nodes(data, "table")[[7]], silent = TRUE)
+    table <- suppressWarnings(dplyr::mutate_at(table, dplyr::vars(hour:prec), as.double))
 
-  if (inherits(nodes_table, "try-error")) {
-    table <- as.data.frame(matrix(NA_real_, nrow = n_row, ncol = 12))
-    table[ , 1] <- rep(seq(start, end, by = "day"), each = 3)
-    table[ , 2] <- c(0, 12, 18)
+    table <- table %>%
+      dplyr::rowwise() %>%
+      dplyr::mutate(
+        date = as.Date(ifelse(is.character(date), lubridate::dmy(date), date),  origin = "1970-01-01"),
+        date_time = lubridate::ymd_hms(paste0(date, "-", hour, ":0:0"))
+      ) %>%
+      dplyr::ungroup()
 
-    if (end == Sys.Date()) {
-      if (t < 13) {
-        table <- table[-c(nrow(table),nrow(table)-1), ]
-      } else if (t < 19) {
-        table <- table[-nrow(table), ]
-      }
+    if (nrow(table) != as.numeric(end - start + 1) * 3) { # ponto fragil. deve testar para o hora final nas etapas 0, 12 e 18h
+      range_dttm <- range(table$date_time)
+      seq_dttm <- data.frame(date_time = seq.POSIXt(range_dttm[1], range_dttm[2], 'hour')) %>%
+        dplyr::filter(lubridate::hour(date_time) %in% c(0, 12, 18))
+
+      table <- dplyr::full_join(table, seq_dttm, by = "date_time")
     }
-  } else {
-    table <- rvest::html_table(nodes_table, header = TRUE)[-1, ]
+
+    out[[i]] <- dplyr::mutate(
+      table,
+      id = stations$id[i],
+      date = lubridate::date(date_time),
+      hour = lubridate::hour(date_time)
+    ) %>%
+      dplyr::select(id, dplyr::everything(), -date_time) %>%
+      dplyr::arrange(id, date, hour) %>%
+      dplyr::as_data_frame()
   }
 
-  names(table) <- c(
-    "date", "hour",
-    "t", "rh", "ap",
-    "ws", "wd",
-    "neb","ins",
-    "t_max", "t_min",
-    "prec"
-  )
-
-  table <- suppressWarnings(dplyr::mutate_at(table, dplyr::vars(hour:prec), as.double))
-
-  table <- dplyr::mutate(
-    table,
-    date = if (is.character(date)) {
-      lubridate::dmy_hms(paste(date, paste0(hour, ":0:0")))
-    } else {
-      lubridate::ymd_hms(paste(date, paste0(hour, ":0:0")))
-    }
-  )
-
-  if (nrow(table) != as.numeric(end - start + 1) * 3) {
-    table <- suppressMessages(padr::pad(table, interval = "hour"))
-
-    table <- table[lubridate::hour(table$date) %in% c(0, 12, 18), ]
-  }
-
-  table <- dplyr::mutate(table, id = id)
-
-  table <- dplyr::select(table, id, dplyr::everything(), -hour)
-
-  z <- dplyr::as_data_frame(table)
-
-  return(z)
+  dplyr::bind_rows(out)
 }

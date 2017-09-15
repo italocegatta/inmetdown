@@ -1,6 +1,6 @@
 Package: inmetdown
 Title: An R package to import data from INMET's weather stations
-Version: 0.0.0.9000
+Version: 0.0.1
 Authors@R: c(
   person("Italo", "Cegatta", email = "italocegatta@gmail.com", role = c("aut", "cre")),
   person("Suzano Papel e Celulose", role = "cph")

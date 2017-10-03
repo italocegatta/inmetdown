@@ -18,7 +18,5 @@ Imports: xml2,
     tidyr,
     lubridate,
     stringr,
-    padr,
-    purrr,
     readr
 Suggests: testthat

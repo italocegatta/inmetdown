@@ -5,21 +5,30 @@
 #'
 #' @export
 #'
-aws_import <- function(id, start, end, ins = FALSE) {
-  ## testar valores unicos
-  id = dplyr::enquo(id)
+aws_import <- function(id, start, end) {
 
-  stations <- aws_station() %>%
-    dplyr::filter(id %in% !!id)
+  id <- dplyr::enquo(id)
 
   start <- check_date(start)
   end <- check_date(end)
+
+  if (start > end) {
+    stop("End-date must be later than start-date.")
+  }
+
+  if (Sys.Date() - start > 365) {
+    stop("Search only the last 365 days.")
+  }
+
   end_hour <- ifelse(
     end == Sys.Date(),
     lubridate::hour(lubridate::now("UTC")) - 1,
     23
   )
   end_date_time <- lubridate::ymd_hms(paste0(end, "-", end_hour, ":0:0"))
+
+  stations <- aws_station() %>%
+    dplyr::filter(id %in% !!id)
 
   seq <- seq_along(stations$id)
   out <- vector("list", length(seq))
@@ -54,7 +63,11 @@ aws_import <- function(id, start, end, ins = FALSE) {
       dplyr::mutate(
         date = as.Date(ifelse(is.character(date), lubridate::dmy(date), date),  origin = "1970-01-01"),
         rad = ifelse(rad < 0, NA_real_, rad) / 1000,
-        date_time = lubridate::ymd_hms(paste0(date, "-", hour, ":0:0"))
+        date_time = lubridate::ymd_hms(paste0(date, "-", hour, ":0:0")),
+        t = mean(c(t_min, t_max), na.rm = TRUE),
+        rh = mean(c(rh_min, rh_max), na.rm = TRUE),
+        dp = mean(c(dp_min, dp_max), na.rm = TRUE),
+        ap = mean(c(ap_min, ap_max), na.rm = TRUE)
       ) %>%
       dplyr::ungroup()
 
@@ -72,16 +85,27 @@ aws_import <- function(id, start, end, ins = FALSE) {
         date = lubridate::date(date_time),
         hour = lubridate::hour(date_time)
       ) %>%
-      dplyr::select(id, dplyr::everything(), -date_time) %>%
+      dplyr::select(
+        -dplyr::ends_with("_ins"),
+        -date_time
+      ) %>%
+      tidyr::replace_na(list(
+        t = NA, rh = NA,
+        dp = NA, ap = NA
+      )) %>%
+      dplyr::select(
+        id, date, hour,
+        prec,
+        t, t_min, t_max,
+        rh, rh_min, rh_max,
+        dp, dp_min, dp_max,
+        ap, ap_min, ap_max,
+        ws, wd, wg,
+        rad
+      ) %>%
+      dplyr::mutate_if(is.double, round, digits = 1) %>%
       dplyr::arrange(id, date, hour) %>%
       dplyr::as_data_frame()
-
-    if (!ins) {
-      table <- dplyr::select(
-        table,
-        -dplyr::ends_with("_ins")
-      )
-    }
 
     out[[i]] <- table
   }

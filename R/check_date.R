@@ -17,9 +17,5 @@ check_date <- function(x) {
     z <- x
   }
 
-  if (Sys.Date() - z > 365) {
-    stop("Search only the last 365 days")
-  }
-
-  return(z)
+  z
 }

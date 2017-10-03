@@ -6,26 +6,44 @@ source("R/check_date.R")
 library(magrittr)
 
 #id = "A032"
+# id = "A137"
 id= c("A137", "A104", "A032")
-start =  Sys.Date() - 1
+start =  Sys.Date() - 35
 end =  Sys.Date()
-ins = FALSE
 
-aws_import( c("A137", "A104", "A032"), Sys.Date() - 1, Sys.Date() )
-aws_import( c("A032"), Sys.Date() - 1, Sys.Date() )
+inmetdown::aws_import( c("A446"), Sys.Date() - 35, Sys.Date())
 
 
 
 ##############
 
+
+library(inmetdown)
+
 i = 1
-id = "82915"
-start =  Sys.Date() - 10
-end =  Sys.Date()
+id = "A446"
+#id <- c("82915", "82326")
+start =  Sys.Date() - 100
+end =  Sys.Date() - 1
 
+cws_bdmep("82915", Sys.Date() - 100, Sys.Date() -1)
 
-cws_import( c("82915"), Sys.Date() - 10, Sys.Date() )
+cws_sonabra( c("82915", "82326"), Sys.Date() - 10, Sys.Date() )
 
+cws_station()
 
+##############################
+
+split_dates <- function(start, end) {
+
+  seq <- seq.Date(start, end, '1 day')
+
+  dummy <- (seq < (lubridate::today("GMT") - 90))
+
+  list(
+    bdmep = range(seq[dummy]),
+    inmet = range(seq[!dummy])
+  )
+}
 
 

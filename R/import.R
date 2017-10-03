@@ -73,3 +73,19 @@ get_table_cws <- function(nodes_table, start, end, n_row) {
     table <- rvest::html_table(nodes_table, header = TRUE)[-1, ]
   }
 }
+
+#' @export
+#'
+con_bdmep <- function() {
+  session <- rvest::html_session(
+    "http://www.inmet.gov.br/projetos/rede/pesquisa/inicio.php"
+  )
+
+  form <- rvest::set_values(
+    rvest::html_form(session)[[1]],
+    mCod = "repunuwof@golemico.com",
+    mSenha = "qs7jsxwr"
+  )
+
+  suppressMessages(rvest::submit_form(session, form))
+}

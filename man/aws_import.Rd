@@ -4,7 +4,7 @@
 \alias{aws_import}
 \title{Download de dados INMET}
 \usage{
-aws_import(id, start, end, ins = FALSE)
+aws_import(id, start, end)
 }
 \description{
 Importa uma série de dados bruta do INMET de uma estação a partir do período

@@ -1,11 +1,8 @@
-#' Download de dados INMET
-#'
-#' Importa uma série de dados bruta do INMET de uma estação a partir do período
-#' especificado
-#'
 #' @export
 #'
-cws_import <- function(id, start = Sys.Date(), end = Sys.Date()) {
+cws_sonabra <- function(id, start, end) {
+
+  id <- dplyr::enquo(id)
 
   start <- check_date(start)
   end <- check_date(end)
@@ -57,14 +54,28 @@ cws_import <- function(id, start = Sys.Date(), end = Sys.Date()) {
       table <- dplyr::full_join(table, seq_dttm, by = "date_time")
     }
 
-    out[[i]] <- dplyr::mutate(
-      table,
-      id = stations$id[i],
-      date = lubridate::date(date_time),
-      hour = lubridate::hour(date_time)
-    ) %>%
-      dplyr::select(id, dplyr::everything(), -date_time) %>%
-      dplyr::arrange(id, date, hour) %>%
+    out[[i]] <- table %>%
+      dplyr::mutate(
+        id = stations$id[i],
+        date = lubridate::date(date_time)
+      ) %>%
+      dplyr::group_by(id, date) %>%
+      dplyr::summarise(
+        prec = mean(prec, na.rm = TRUE),
+        t = mean(t, na.rm = TRUE),
+        t_min = mean(t_min, na.rm = TRUE),
+        t_max = mean(t_max, na.rm = TRUE),
+        rh = mean(rh, na.rm = TRUE),
+        ws = mean(ws, na.rm = TRUE),
+        ins = mean(ins, na.rm = TRUE)
+      ) %>%
+      dplyr::mutate_if(is.double, round, digits = 1) %>%
+      tidyr::replace_na(list(
+        prec = NA, t = NA, t_min = NA,
+        t_max = NA, rh = NA,
+        ws = NA, ins = NA
+      )) %>%
+      dplyr::arrange(id, date) %>%
       dplyr::as_data_frame()
   }
 

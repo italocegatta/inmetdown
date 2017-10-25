@@ -2,7 +2,7 @@
 #'
 cws_bdmep <- function(id, start, end) {
 
-  id <- dplyr::enquo(id)
+  #id <- dplyr::enquo(id)
 
   start <- check_date(start)
   end <- check_date(end)
@@ -10,6 +10,8 @@ cws_bdmep <- function(id, start, end) {
 
   seq <- seq_along(id)
   out <- vector("list", length(seq))
+
+
   for (i in seq) {
 
     table <- get_table_cws_bdmep(id[i], start, end, n_row)
@@ -18,7 +20,7 @@ cws_bdmep <- function(id, start, end) {
       "id",
       "date", "hour",
       "prec", "t_max", "t_min",
-      "ins", "t", "rh", "ws"
+      "ins", "rh", "ws"
     )
 
     table <- suppressWarnings(dplyr::mutate_at(table, dplyr::vars(hour:prec), as.double))
@@ -77,7 +79,7 @@ get_table_cws_bdmep <- function(id, start, end, n_row) {
   con <- con_bdmep()
 
   param <- glue::glue(
-    "http://www.inmet.gov.br/projetos/rede/pesquisa/gera_serie_txt.php?&mRelEstacao={id}&btnProcesso=serie&mRelDtInicio={start_f}&mRelDtFim={end_f}&mAtributos=,,1,1,,,,,,1,1,,,1,1,1,"
+    "http://www.inmet.gov.br/projetos/rede/pesquisa/gera_serie_txt.php?&mRelEstacao={id}&btnProcesso=serie&mRelDtInicio={start_f}&mRelDtFim={end_f}&mAtributos=,,1,1,,,,,,1,1,,,,1,1,"
   )
 
   txt <- rvest::jump_to(con, param) %>%

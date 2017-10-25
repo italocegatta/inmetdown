@@ -21,12 +21,14 @@ inmetdown::aws_import( c("A446"), Sys.Date() - 35, Sys.Date())
 library(inmetdown)
 
 i = 1
-id = "A446"
-#id <- c("82915", "82326")
-start =  Sys.Date() - 100
-end =  Sys.Date() - 1
+# id = "82336"
+# id <- c("82915", "82326")
+start =  as.Date("1929-01-01")
+end =  as.Date("2017-09-30")
 
-cws_bdmep("82915", Sys.Date() - 100, Sys.Date() -1)
+
+
+cws_bdmep("82915", Sys.Date() - 400, Sys.Date() -1)
 
 cws_sonabra( c("82915", "82326"), Sys.Date() - 10, Sys.Date() )
 

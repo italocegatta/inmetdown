@@ -45,29 +45,29 @@ aws_import <- function(id, start, end) {
     table <- get_table_aws(nodes_table, start, end, end_hour)
 
     names(table) <- c(
-      "date",
-      "hour",
+      "data",
+      "hora",
       "t_ins",  "t_max", "t_min",
-      "rh_ins", "rh_max", "rh_min",
-      "dp_ins", "dp_max", "dp_min",
-      "ap_ins", "ap_max", "ap_min",
-      "ws", "wd", "wg",
+      "ur_ins", "ur_max", "ur_min",
+      "pto_ins", "pto_max", "pto_min",
+      "pa_ins", "pa_max", "pa_min",
+      "v_med", "v_dir", "v_max",
       "rad",
-      "prec"
+      "ppt"
     )
 
-    table <- suppressWarnings(dplyr::mutate_at(table, dplyr::vars(hour:prec), as.double))
+    table <- suppressWarnings(dplyr::mutate_at(table, dplyr::vars(hora:ppt), as.double))
 
     table <- table %>%
       dplyr::rowwise() %>%
       dplyr::mutate(
-        date = as.Date(ifelse(is.character(date), lubridate::dmy(date), date),  origin = "1970-01-01"),
+        data = as.Date(ifelse(is.character(data), lubridate::dmy(data), data),  origin = "1970-01-01"),
         rad = ifelse(rad < 0, NA_real_, rad) / 1000,
-        date_time = lubridate::ymd_hms(paste0(date, "-", hour, ":0:0")),
-        t = mean(c(t_min, t_max), na.rm = TRUE),
-        rh = mean(c(rh_min, rh_max), na.rm = TRUE),
-        dp = mean(c(dp_min, dp_max), na.rm = TRUE),
-        ap = mean(c(ap_min, ap_max), na.rm = TRUE)
+        date_time = lubridate::ymd_hms(paste0(data, "-", hora, ":0:0")),
+        t_med = mean(c(t_min, t_max), na.rm = TRUE),
+        ur_med = mean(c(ur_min, ur_max), na.rm = TRUE),
+        pto_med = mean(c(pto_min, pto_max), na.rm = TRUE),
+        pa_med = mean(c(pa_min, pa_max), na.rm = TRUE)
       ) %>%
       dplyr::ungroup()
 
@@ -82,29 +82,29 @@ aws_import <- function(id, start, end) {
       dplyr::full_join(seq_dttm, by = "date_time") %>%
       dplyr::mutate(
         id = stations$id[i],
-        date = lubridate::date(date_time),
-        hour = lubridate::hour(date_time)
+        data = lubridate::date(date_time),
+        hora = lubridate::hour(date_time)
       ) %>%
       dplyr::select(
         -dplyr::ends_with("_ins"),
         -date_time
       ) %>%
       tidyr::replace_na(list(
-        t = NA, rh = NA,
-        dp = NA, ap = NA
+        t_med = NA, ur_med = NA,
+        pto_med = NA, pa_med = NA
       )) %>%
       dplyr::select(
-        id, date, hour,
-        prec,
-        t, t_min, t_max,
-        rh, rh_min, rh_max,
-        dp, dp_min, dp_max,
-        ap, ap_min, ap_max,
-        ws, wd, wg,
-        rad
+        id, data, hora,
+        ppt,
+        t_min, t_med, t_max,
+        ur_max, ur_med, ur_min,
+        pa_max, pa_med, pa_min,
+        rad,
+        pto_max, pto_med, pto_min,
+        v_dir, v_max, v_med
       ) %>%
       dplyr::mutate_if(is.double, round, digits = 1) %>%
-      dplyr::arrange(id, date, hour) %>%
+      dplyr::arrange(id, data, hora) %>%
       dplyr::as_data_frame()
 
     out[[i]] <- table

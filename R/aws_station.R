@@ -24,17 +24,20 @@ aws_station <- function(only.br = TRUE) {
     '['(-1,)
 
   id <- stringr::str_sub(df_tidy$est, 10, 13)
-  state <- stringr::str_sub(gsub(".*label = '|';.*", "", df_tidy$text), 1, 2)
-  city <- stringr::str_extract(gsub(".*<b>Estação:</b> |<br>.*", "", df_tidy$text), ".*(?=-)")
+  estado <- stringr::str_sub(gsub(".*label = '|';.*", "", df_tidy$text), 1, 2)
+  municipio <- stringr::str_extract(gsub(".*<b>Estação:</b> |<br>.*", "", df_tidy$text), ".*(?=-)")
   lat <- as.numeric(gsub(".*Latitude: |º<br>.*", "", df_tidy$text))
-  lon <- as.numeric(gsub(".*Longitude: |º<br>.*", "", df_tidy$text))
+  lon <- suppressMessages(as.numeric(gsub(".*Longitude: |º<br>.*", "", df_tidy$text)))
   alt <- readr::parse_number(gsub(".*Altitude: | metros.*", "", df_tidy$text))
-  start <- lubridate::dmy(gsub(".*Aberta em: |<br>.*", "", df_tidy$text))
+  inicio <- lubridate::dmy(gsub(".*Aberta em: |<br>.*", "", df_tidy$text))
   url <- gsub(".*width=50><a href=| target=_new>.*",  "", df_tidy$text)
 
   z <- dplyr::data_frame(
-    id, state, city, lat, lon, alt, start, url
+    id, estado, municipio, lon, lat, alt, inicio, url
   )
+
+
+  z[z$id == "A923", "lon"] <- -54.381001 # erro no site
 
   if (isTRUE(only.br)) {
     z <- dplyr::filter(z, !stringr::str_detect(id, "[UC]"))

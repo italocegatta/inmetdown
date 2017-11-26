@@ -74,7 +74,6 @@ get_table_cws <- function(nodes_table, start, end, n_row) {
   }
 }
 
-#' @export
 #'
 con_bdmep <- function() {
   session <- rvest::html_session(

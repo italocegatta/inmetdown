@@ -1,4 +1,3 @@
-#' @export
 #'
 cws_sonabra <- function(id, start, end) {
 

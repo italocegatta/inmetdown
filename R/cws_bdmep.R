@@ -1,4 +1,3 @@
-#' @export
 #'
 cws_bdmep <- function(id, start, end) {
 
@@ -69,7 +68,6 @@ cws_bdmep <- function(id, start, end) {
   dplyr::bind_rows(out)
 }
 
-#' @export
 #'
 get_table_cws_bdmep <- function(id, start, end, n_row) {
 

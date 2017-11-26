@@ -1,5 +1,4 @@
 # Parse and chek date
-#' @export
 check_date <- function(x) {
   if (!lubridate::is.Date(x)) {
     test1 <- tryCatch(lubridate::dmy(x), warning=function(w) w)

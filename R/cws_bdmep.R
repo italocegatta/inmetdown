@@ -1,5 +1,5 @@
-#'
-cws_bdmep <- function(id, start, end) {
+#' @export
+cws_import <- function(id, start, end) {
 
   #id <- dplyr::enquo(id)
 
@@ -12,23 +12,23 @@ cws_bdmep <- function(id, start, end) {
 
 
   for (i in seq) {
-
-    table <- get_table_cws_bdmep(id[i], start, end, n_row)
+# table <- inmetdown:::get_table_bdmep(id[i], start, end, n_row)
+    table <- get_table_bdmep(id[i], start, end, n_row)
 
     names(table) <- c(
       "id",
-      "date", "hour",
-      "prec", "t_max", "t_min",
-      "ins", "rh", "ws"
+      "data", "hora",
+      "ppt", "t_max", "t_min",
+      "ins", "ur", "v_med"
     )
 
-    table <- suppressWarnings(dplyr::mutate_at(table, dplyr::vars(hour:prec), as.double))
+    table <- suppressWarnings(dplyr::mutate_at(table, dplyr::vars(hora:v_med), as.double))
 
     table <- table %>%
       dplyr::rowwise() %>%
       dplyr::mutate(
-        date = as.Date(ifelse(lubridate::is.Date(date), date, lubridate::dmy(date)),  origin = "1970-01-01"),
-        date_time = lubridate::ymd_h(paste(date, stringr::str_pad(hour / 100, 2, pad="0")))
+        data = as.Date(ifelse(lubridate::is.Date(data), data, lubridate::dmy(data)),  origin = "1970-01-01"),
+        date_time = lubridate::ymd_h(paste(data, stringr::str_pad(hora / 100, 2, pad = "0")))
       ) %>%
       dplyr::ungroup()
 
@@ -43,68 +43,40 @@ cws_bdmep <- function(id, start, end) {
     out[[i]] <- table %>%
       dplyr::mutate(
         id = id[i],
-        date = lubridate::date(date_time)
+        data = lubridate::date(date_time)
       ) %>%
-      dplyr::group_by(id, date) %>%
+      dplyr::group_by(id, data) %>%
       dplyr::summarise(
-        prec = mean(prec, na.rm = TRUE),
-        t = mean(t, na.rm = TRUE),
+        ppt = mean(ppt, na.rm = TRUE),
         t_min = mean(t_min, na.rm = TRUE),
         t_max = mean(t_max, na.rm = TRUE),
-        rh = mean(rh, na.rm = TRUE),
-        ws = mean(ws, na.rm = TRUE),
+        ur_med = mean(ur, na.rm = TRUE),
+        v_med = mean(v_med, na.rm = TRUE),
         ins = mean(ins, na.rm = TRUE)
       ) %>%
       dplyr::mutate_if(is.double, round, digits = 1) %>%
+      dplyr::rowwise() %>%
+      dplyr::mutate(t_med = (t_max + t_min) / 2) %>%
+      dplyr::ungroup() %>%
       tidyr::replace_na(list(
-        prec = NA, t = NA, t_min = NA,
-        t_max = NA, rh = NA,
-        ws = NA, ins = NA
+        ppt = NA, t_med = NA, t_min = NA,
+        t_max = NA, ur_med = NA,
+        v_med = NA, ins = NA
       )) %>%
-      dplyr::arrange(id, date) %>%
-      dplyr::as_data_frame()
+      dplyr::select(
+        id, data,
+        ppt,
+        t_max, t_med, t_min,
+        ur_med,
+        ins,
+        v_med
+      ) %>%
+      dplyr::arrange(id, data)
+
   }
 
   dplyr::bind_rows(out)
 }
 
-#'
-get_table_cws_bdmep <- function(id, start, end, n_row) {
 
-  start_f = format(start, "%d/%m/%Y")
-  end_f = format(end, "%d/%m/%Y")
-
-  con <- con_bdmep()
-
-  param <- glue::glue(
-    "http://www.inmet.gov.br/projetos/rede/pesquisa/gera_serie_txt.php?&mRelEstacao={id}&btnProcesso=serie&mRelDtInicio={start_f}&mRelDtFim={end_f}&mAtributos=,,1,1,,,,,,1,1,,,,1,1,"
-  )
-
-  txt <- rvest::jump_to(con, param) %>%
-    rvest::html_nodes(xpath = "//pre") %>%
-    rvest::html_text() %>%
-    gsub("^.+instruções\n--------------------\n", "", .)
-
-  table <- try(read.csv(text = txt, header = T, sep = ";"), silent = TRUE)
-
-
-  if (inherits(table, "try-error")) {
-    table <- as.data.frame(matrix(NA_real_, nrow = n_row, ncol = 12))
-    table[ , 1] <- rep(seq(start, end, by = "day"), each = 3)
-    table[ , 2] <- c(0, 12, 18)
-
-    if (end == Sys.Date()) {
-      if (t < 13) {
-        table <- table[-c(nrow(table),nrow(table)-1), ]
-      } else if (t < 19) {
-        table <- table[-nrow(table), ]
-      }
-    }
-  } else {
-    table$X <- NULL
-    table <- tibble::as_tibble(table)
-  }
-
-  table
-}
 

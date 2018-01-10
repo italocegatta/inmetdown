@@ -1,10 +1,5 @@
-#' @export
-cws_import <- function(id, start, end) {
+import_bdmep <- function(id, start, end) {
 
-  #id <- dplyr::enquo(id)
-
-  start <- check_date(start)
-  end <- check_date(end)
   n_row <- as.numeric(end - start + 1) * 2
 
   seq <- seq_along(id)
@@ -13,7 +8,7 @@ cws_import <- function(id, start, end) {
 
   for (i in seq) {
 # table <- inmetdown:::get_table_bdmep(id[i], start, end, n_row)
-    table <- get_table_bdmep(id[i], start, end, n_row)
+    table <- get_table_bdmep(id[i], start, end, n_row, "^.+instruções\n--------------------\n")
 
     names(table) <- c(
       "id",
@@ -25,6 +20,7 @@ cws_import <- function(id, start, end) {
     table <- suppressWarnings(dplyr::mutate_at(table, dplyr::vars(hora:v_med), as.double))
 
     table <- table %>%
+      dplyr::mutate(id = as.character(id)) %>%
       dplyr::rowwise() %>%
       dplyr::mutate(
         data = as.Date(ifelse(lubridate::is.Date(data), data, lubridate::dmy(data)),  origin = "1970-01-01"),
@@ -72,7 +68,6 @@ cws_import <- function(id, start, end) {
         v_med
       ) %>%
       dplyr::arrange(id, data)
-
   }
 
   dplyr::bind_rows(out)

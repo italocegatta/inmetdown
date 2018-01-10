@@ -1,9 +1,4 @@
-cws_sonabra <- function(id, start, end) {
-
-  id <- dplyr::enquo(id)
-
-  start <- check_date(start)
-  end <- check_date(end)
+import_sonabra <- function(id, start, end) {
 
   n_row <- as.numeric(end - start + 1) * 3
   t <- lubridate::hour(lubridate::now("UTC"))
@@ -55,26 +50,27 @@ cws_sonabra <- function(id, start, end) {
     out[[i]] <- table %>%
       dplyr::mutate(
         id = stations$id[i],
-        date = lubridate::date(date_time)
+        data = lubridate::date(date_time)
       ) %>%
-      dplyr::group_by(id, date) %>%
+      dplyr::group_by(id, data) %>%
       dplyr::summarise(
-        prec = mean(prec, na.rm = TRUE),
-        t = mean(t, na.rm = TRUE),
-        t_min = mean(t_min, na.rm = TRUE),
+        ppt = mean(prec, na.rm = TRUE),
         t_max = mean(t_max, na.rm = TRUE),
-        rh = mean(rh, na.rm = TRUE),
-        ws = mean(ws, na.rm = TRUE),
-        ins = mean(ins, na.rm = TRUE)
+        t_med = mean(t, na.rm = TRUE),
+        t_min = mean(t_min, na.rm = TRUE),
+        ur_med = mean(rh, na.rm = TRUE),
+        ins = mean(ins, na.rm = TRUE),
+        v_med = mean(ws, na.rm = TRUE)
       ) %>%
+      dplyr::ungroup() %>%
       dplyr::mutate_if(is.double, round, digits = 1) %>%
       tidyr::replace_na(list(
-        prec = NA, t = NA, t_min = NA,
-        t_max = NA, rh = NA,
-        ws = NA, ins = NA
+        ppt = NA, t_med = NA, t_min = NA,
+        t_max = NA, ur_med = NA,
+        v_med = NA, ins = NA
       )) %>%
-      dplyr::arrange(id, date) %>%
-      dplyr::as_data_frame()
+      dplyr::arrange(id, data) %>%
+      dplyr::as_tibble()
   }
 
   dplyr::bind_rows(out)

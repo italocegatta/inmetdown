@@ -1,3 +1,49 @@
+# debug BDMEP
+
+library(magrittr)
+load("R/sysdata.rda")
+source("R/check_date.R")
+source("R/aux_import_aws.R")
+source("R/aux_import_cws.R")
+i = 1
+id = c("82915", "82326")
+id = "82336"
+start =  Sys.Date() - 100
+end =  Sys.Date() - 85
+
+inmetdown:::import_bdmep("82336", Sys.Date() - 100, Sys.Date() -100)
+
+# debug SONABRA
+
+library(magrittr)
+load("R/sysdata.rda")
+source("R/check_date.R")
+source("R/aux_import_aws.R")
+source("R/aux_import_cws.R")
+library(inmetdown)
+i = 1
+id = c("82915", "82326")
+id = "82336"
+start =  Sys.Date() - 3
+end =  Sys.Date() - 2
+
+inmetdown:::import_sonabra("82336", Sys.Date() - 20, Sys.Date() -19)
+
+
+# debug cws_import
+
+start =  Sys.Date() - 31
+end =  Sys.Date() - 32
+inmetdown::cws_import("82336", start, end)
+
+
+
+isTRUE(c(start, end))
+isTRUE(TRUE)
+
+
+inmetdown:::import_bdmep(id, dates$bdmep[1], dates$bdmep[2])
+
 #library(inmetdown)
 load("R/sysdata.rda")
 source("R/import.R")
@@ -25,7 +71,7 @@ i = 1
 id = "82336"
 id <- c("82915", "82326")
 start =  Sys.Date() - 100
-end =  Sys.Date()
+end =  Sys.Date() - 85
 
 
 

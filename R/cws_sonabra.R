@@ -1,9 +1,13 @@
-import_sonabra <- function(id, start, end) {
+import_sonabra <- function(id, start, end, stations) {
 
   n_row <- as.numeric(end - start + 1) * 3
   t <- lubridate::hour(lubridate::now("UTC"))
 
-  stations <- cws_station() %>%
+  if (is.null(stations)) {
+    stations <- cws_station() %>%
+      dplyr::filter(id %in% !!id)
+  }
+  stations <- stations %>%
     dplyr::filter(id %in% !!id)
 
   seq <- seq_along(stations$id)

@@ -6,9 +6,10 @@ import_sonabra <- function(id, start, end, stations) {
   if (is.null(stations)) {
     stations <- cws_station() %>%
       dplyr::filter(id %in% !!id)
+  } else {
+    stations <- stations %>%
+      dplyr::filter(id %in% !!id)
   }
-  stations <- stations %>%
-    dplyr::filter(id %in% !!id)
 
   seq <- seq_along(stations$id)
   out <- vector("list", length(seq))
@@ -39,12 +40,17 @@ import_sonabra <- function(id, start, end, stations) {
       dplyr::rowwise() %>%
       dplyr::mutate(
         date = as.Date(ifelse(is.character(date), lubridate::dmy(date), date),  origin = "1970-01-01"),
-        date_time = lubridate::ymd_hms(paste0(date, "-", hour, ":0:0"))
+        date_time = lubridate::ymd_hms(paste0(date, "-", hour, "-00-00"))
       ) %>%
       dplyr::ungroup()
 
-    if (nrow(table) != as.numeric(end - start + 1) * 3) { # ponto fragil. deve testar para o hora final nas etapas 0, 12 e 18h
-      range_dttm <- range(table$date_time)
+    if (nrow(table) != as.numeric(end - start + 1) * 3) {
+      range_dttm <- lubridate::ymd_hms(paste0(c(start, end), "-", "00-00-0"))
+
+      if (range_dttm[2] == Sys.Date()) {
+        lubridate::hour(range_dttm[2]) <- lubridate::hour(lubridate::now(tzone = "UTC"))
+      }
+
       seq_dttm <- data.frame(date_time = seq.POSIXt(range_dttm[1], range_dttm[2], 'hour')) %>%
         dplyr::filter(lubridate::hour(date_time) %in% c(0, 12, 18))
 
@@ -64,14 +70,16 @@ import_sonabra <- function(id, start, end, stations) {
         t_min = mean(t_min, na.rm = TRUE),
         ur_med = mean(rh, na.rm = TRUE),
         ins = mean(ins, na.rm = TRUE),
+        pa_med = mean(ap, na.rm = TRUE),
+        v_dir = mean(wd, na.rm = TRUE),
         v_med = mean(ws, na.rm = TRUE)
       ) %>%
       dplyr::ungroup() %>%
       dplyr::mutate_if(is.double, round, digits = 1) %>%
       tidyr::replace_na(list(
-        ppt = NA, t_med = NA, t_min = NA,
-        t_max = NA, ur_med = NA,
-        v_med = NA, ins = NA
+        ppt = NA, t_max = NA, t_med = NA, t_min = NA,
+        ur_med = NA, ins = NA, pa_med = NA,
+        v_dir = NA, v_med = NA
       )) %>%
       dplyr::arrange(id, data) %>%
       dplyr::as_tibble()

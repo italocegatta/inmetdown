@@ -18,23 +18,25 @@ inmetdown:::import_bdmep("82336", Sys.Date() - 100, Sys.Date() -100)
 library(magrittr)
 load("R/sysdata.rda")
 source("R/check_date.R")
+source("R/cws_station.R")
 source("R/aux_import_aws.R")
 source("R/aux_import_cws.R")
 library(inmetdown)
 i = 1
 id = c("82915", "82326")
 id = "82336"
-start =  Sys.Date() - 3
-end =  Sys.Date() - 2
+start =  as.Date("2018-01-01")
+end = as.Date("2018-01-05")
 
-inmetdown:::import_sonabra("82336", Sys.Date() - 20, Sys.Date() -19)
+inmetdown:::import_sonabra("82336", as.Date("2018-01-01"), as.Date("2018-01-05"))
 
+cws_import("82336", as.Date("2017-12-25"), as.Date("2018-01-05"))
 
 # debug cws_import
 
-start =  Sys.Date() - 31
-end =  Sys.Date() - 32
-inmetdown::cws_import("82336", start, end)
+start =  Sys.Date() - 58
+end =  Sys.Date() - 30
+inmetdown::cws_import("83398", start, end)
 
 
 

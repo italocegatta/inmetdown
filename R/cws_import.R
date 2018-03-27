@@ -23,7 +23,7 @@ cws_import <- function(id, start, end) {
   dplyr::bind_rows(bdmep, sonabra)
 }
 
-split_dates <- function(start, end, min = 30) {
+split_dates <- function(start, end, min = 90) {
 
   seq <- seq.Date(start, end, '1 day')
 

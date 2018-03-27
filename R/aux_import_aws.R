@@ -72,4 +72,6 @@ get_table_cws <- function(nodes_table, start, end, n_row) {
   } else {
     table <- rvest::html_table(nodes_table, header = TRUE)[-1, ]
   }
+
+  table
 }

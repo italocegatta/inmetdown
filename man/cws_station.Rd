@@ -4,7 +4,7 @@
 \alias{cws_station}
 \title{Get basic information about INMET's conventional weather station}
 \usage{
-cws_station()
+cws_station(proxy = ".")
 }
 \description{
 Get basic information about INMET's conventional weather station

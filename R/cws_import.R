@@ -1,5 +1,5 @@
 #' @export
-cws_import <- function(id, start, end, stations = NULL) {
+cws_import <- function(id, start, end, stations = NULL, proxy = ".") {
   start <- check_date(start)
   end <- check_date(end)
 
@@ -13,11 +13,11 @@ cws_import <- function(id, start, end, stations = NULL) {
   sonabra <- list()
 
   if (!isTRUE(dates$bdmep)) {
-    bdmep <- import_bdmep(id, dates$bdmep[1], dates$bdmep[2])
+    bdmep <- import_bdmep(id, dates$bdmep[1], dates$bdmep[2], proxy)
   }
 
   if (!isTRUE(dates$sonabra)) {
-    sonabra <- import_sonabra(id, dates$sonabra[1], dates$sonabra[2], stations)
+    sonabra <- import_sonabra(id, dates$sonabra[1], dates$sonabra[2], stations, proxy)
   }
 
   dplyr::bind_rows(bdmep, sonabra)

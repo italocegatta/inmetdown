@@ -2,9 +2,10 @@
 #'
 #' @export
 #'
-aws_station <- function(only.br = TRUE) {
+aws_station <- function(only.br = TRUE, proxy = ".") {
 
   txt_split <- "http://www.inmet.gov.br/sonabra/maps/pg_mapa.php" %>%
+    rvest::html_session(proxy) %>%
     xml2::read_html() %>%
     rvest::html_nodes(xpath = "/html/head/script[2]/text()") %>%
     rvest::html_text() %>%
@@ -13,7 +14,7 @@ aws_station <- function(only.br = TRUE) {
 
   id <- stringr::str_match(txt_split, "\\*\\* ESTACÃO (.*?) \\*\\*")[,2]
   estado <- stringr::str_sub(gsub(".*label = '|';.*", "", txt_split), 1, 2)
-  municipio <- stringr::str_extract(gsub(".*<b>Estação:</b> |<br>.*", "", txt_split), ".*(?=-)")
+  municipio <- stringr::str_extract(gsub(".*<b>Estação: |<br>.*", "", txt_split), ".*(?=-)")
   lat <- gsub(".*Latitude: |º<br>.*", "", txt_split)
   lon <- gsub(".*Longitude: |º<br>.*", "", txt_split)
   alt <- readr::parse_number(gsub(".*Altitude: | metros.*", "", txt_split))

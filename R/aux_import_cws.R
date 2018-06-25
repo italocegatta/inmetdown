@@ -1,9 +1,9 @@
-get_table_bdmep <- function(id, start, end, n_row, token) {
+get_table_bdmep <- function(id, start, end, n_row, token, proxy) {
 
   start_f = format(start, "%d/%m/%Y")
   end_f = format(end, "%d/%m/%Y")
 
-  con <- con_bdmep()
+  con <- con_bdmep(proxy)
 
   param <- glue::glue(
     "http://www.inmet.gov.br/projetos/rede/pesquisa/gera_serie_txt.php?&mRelEstacao={id}&btnProcesso=serie&mRelDtInicio={start_f}&mRelDtFim={end_f}&mAtributos=,,1,1,,,,,,1,1,,,,1,1,"
@@ -36,9 +36,10 @@ get_table_bdmep <- function(id, start, end, n_row, token) {
   dplyr::as_tibble(table)
 }
 
-con_bdmep <- function() {
+con_bdmep <- function(proxy) {
   session <- rvest::html_session(
-    "http://www.inmet.gov.br/projetos/rede/pesquisa/inicio.php"
+    "http://www.inmet.gov.br/projetos/rede/pesquisa/inicio.php",
+    proxy
   )
 
   form <- rvest::set_values(

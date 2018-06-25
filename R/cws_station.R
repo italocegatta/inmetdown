@@ -2,18 +2,19 @@
 #'
 #' @export
 #'
-cws_station <- function() {
+cws_station <- function(proxy = ".") {
 
   txt_split <- "http://www.inmet.gov.br/sim/sonabra/index.php" %>%
+    rvest::html_session(proxy) %>%
     xml2::read_html() %>%
     rvest::html_nodes(xpath = "/html/head/script[2]/text()") %>%
     rvest::html_text() %>%
     stringr::str_split("\\/\\/\\*", simplify = TRUE) %>%
     '['(-1)
 
-  id <- gsub(".*OMM:</b> |<br>.*", "", txt_split)
+  id <- gsub(".*OMM: |<br>.*", "", txt_split)
   state <- stringr::str_sub(gsub(".*label = '|';.*", "", txt_split), 1, 2)
-  city <- stringr::str_extract(gsub(".*<b>Estação:</b> |<br>.*", "", txt_split), ".*(?=-)")
+  city <- stringr::str_extract(gsub(".*<b>Estação: |<br>.*", "", txt_split), ".*(?=-)")
   lat <- as.numeric(gsub(".*Latitude: |º<br>.*", "", txt_split))
   lon <- as.numeric(gsub(".*Longitude: |º<br>.*", "", txt_split))
   alt <- readr::parse_number(gsub(".*Altitude: | metros.*", "", txt_split))

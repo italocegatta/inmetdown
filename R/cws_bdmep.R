@@ -1,4 +1,4 @@
-import_bdmep <- function(id, start, end) {
+import_bdmep <- function(id, start, end, proxy) {
 
   n_row <- as.numeric(end - start + 1) * 2
 
@@ -8,7 +8,7 @@ import_bdmep <- function(id, start, end) {
 
   for (i in seq) {
 # table <- inmetdown:::get_table_bdmep(id[i], start, end, n_row)
-    table <- get_table_bdmep(id[i], start, end, n_row, "^.+instruções\n--------------------\n")
+    table <- get_table_bdmep(id[i], start, end, n_row, "^.+instruções\n--------------------\n", proxy)
 
     names(table) <- c(
       "id",

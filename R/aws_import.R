@@ -5,7 +5,7 @@
 #'
 #' @export
 #'
-aws_import <- function(id, start, end) {
+aws_import <- function(id, start, end, proxy = ".") {
 
   id <- dplyr::enquo(id)
 
@@ -34,7 +34,7 @@ aws_import <- function(id, start, end) {
   out <- vector("list", length(seq))
   for (i in seq) {
 
-    session <- suppressWarnings(rvest::html_session(stations$url[i]))
+    session <- suppressWarnings(rvest::html_session(stations$url[i], proxy))
 
     form <- get_form(session, start, end)
 

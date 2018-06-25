@@ -1,4 +1,4 @@
-import_sonabra <- function(id, start, end, stations) {
+import_sonabra <- function(id, start, end, stations, proxy) {
 
   n_row <- as.numeric(end - start + 1) * 3
   t <- lubridate::hour(lubridate::now("UTC"))
@@ -15,7 +15,7 @@ import_sonabra <- function(id, start, end, stations) {
   out <- vector("list", length(seq))
   for (i in seq) {
 
-    session <- suppressWarnings(rvest::html_session(stations$url[i]))
+    session <- suppressWarnings(rvest::html_session(stations$url[i], proxy))
 
     form <- get_form(session, start, end)
 

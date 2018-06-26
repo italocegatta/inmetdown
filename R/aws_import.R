@@ -27,7 +27,7 @@ aws_import <- function(id, start, end, proxy = ".") {
   )
   end_date_time <- lubridate::ymd_hms(paste0(end, "-", end_hour, ":0:0"))
 
-  stations <- aws_station() %>%
+  stations <- aws_station(proxy = proxy) %>%
     dplyr::filter(id %in% !!id)
 
   seq <- seq_along(stations$id)

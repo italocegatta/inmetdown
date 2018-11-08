@@ -5,9 +5,9 @@
 #'
 #' @export
 #'
-aws_import <- function(id, start, end, proxy = ".") {
+aws_import <- function(id, start, end, proxy = ".", stations = NULL) {
 
-  id <- dplyr::enquo(id)
+  id_filter <- id
 
   start <- check_date(start)
   end <- check_date(end)
@@ -27,11 +27,17 @@ aws_import <- function(id, start, end, proxy = ".") {
   )
   end_date_time <- lubridate::ymd_hms(paste0(end, "-", end_hour, ":0:0"))
 
-  stations <- aws_station(proxy = proxy) %>%
-    dplyr::filter(id %in% !!id)
+  if (is.null(stations)) {
+    stations <- cws_station(proxy = proxy) %>%
+      dplyr::filter(id %in% id_filter)
+  } else {
+    stations <- stations %>%
+      dplyr::filter(id %in% id_filter)
+  }
 
   seq <- seq_along(stations$id)
   out <- vector("list", length(seq))
+
   for (i in seq) {
 
     session <- suppressWarnings(rvest::html_session(stations$url[i], proxy))
@@ -42,7 +48,19 @@ aws_import <- function(id, start, end, proxy = ".") {
 
     nodes_table  <- try(rvest::html_nodes(data, "table")[[6]], silent = TRUE)
 
-    table <- get_table_aws(nodes_table, start, end, end_hour)
+    if (inherits(nodes_table, "try-error")) {
+      table <- as.data.frame(matrix(NA_real_, nrow = 2, ncol = 19))
+      table[, 1] <- c(start, end)
+
+      if (end == Sys.Date()) {
+        table[, 2] <- c(0, end_hour)
+      } else {
+        table[, 2] <- c(0, 23)
+      }
+
+    } else {
+      table <- rvest::html_table(nodes_table, header = TRUE)[-1, ]
+    }
 
     names(table) <- c(
       "data",
@@ -59,6 +77,7 @@ aws_import <- function(id, start, end, proxy = ".") {
     table <- suppressWarnings(dplyr::mutate_at(table, dplyr::vars(hora:ppt), as.double))
 
     table <- table %>%
+      dplyr::filter(!is.na(hora)) %>%
       dplyr::rowwise() %>%
       dplyr::mutate(
         data = as.Date(ifelse(is.character(data), lubridate::dmy(data), data),  origin = "1970-01-01"),

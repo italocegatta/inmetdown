@@ -13,6 +13,7 @@ import_sonabra <- function(id, start, end, stations, proxy) {
 
   seq <- seq_along(stations$id)
   out <- vector("list", length(seq))
+
   for (i in seq) {
 
     session <- suppressWarnings(rvest::html_session(stations$url[i], proxy))
@@ -21,30 +22,45 @@ import_sonabra <- function(id, start, end, stations, proxy) {
 
     data <- get_data(session, form)
 
-    nodes_table  <- try(rvest::html_nodes(data, "table")[[7]], silent = TRUE)
+    nodes_table <- try(rvest::html_nodes(data, "table")[[7]], silent = TRUE)
 
-    table <- get_table_cws(nodes_table, start, end, n_row)
+    if (inherits(nodes_table, "try-error")) {
+      table <- as.data.frame(matrix(NA_real_, nrow = n_row, ncol = 12))
+      table[ , 1] <- rep(seq(start, end, by = "day"), each = 3)
+      table[ , 2] <- c(0, 12, 18)
+
+      if (end == Sys.Date()) {
+        if (t < 13) {
+          table <- table[-c(nrow(table),nrow(table)-1), ]
+        } else if (t < 19) {
+          table <- table[-nrow(table), ]
+        }
+      }
+    } else {
+      table <- rvest::html_table(nodes_table, header = TRUE)[-1, ]
+    }
 
     names(table) <- c(
-      "date", "hour",
-      "t", "rh", "ap",
-      "ws", "wd",
+      "data", "hora",
+      "t_med", "ur_med", "pa_med",
+      "v_med", "v_dir",
       "neb","ins",
       "t_max", "t_min",
-      "prec"
+      "ppt"
     )
 
-    table <- suppressWarnings(dplyr::mutate_at(table, dplyr::vars(hour:prec), as.double))
+    table <- suppressWarnings(dplyr::mutate_at(table, dplyr::vars(hora:ppt), as.double))
 
     table <- table %>%
       dplyr::rowwise() %>%
       dplyr::mutate(
-        date = as.Date(ifelse(is.character(date), lubridate::dmy(date), date),  origin = "1970-01-01"),
-        date_time = lubridate::ymd_hms(paste0(date, "-", hour, "-00-00"))
+        data = as.Date(ifelse(is.character(data), lubridate::dmy(data), data),  origin = "1970-01-01"),
+        date_time = lubridate::ymd_hms(paste0(data, "-", hora, "-00-00"))
       ) %>%
       dplyr::ungroup()
 
     if (nrow(table) != as.numeric(end - start + 1) * 3) {
+
       range_dttm <- lubridate::ymd_hms(paste0(c(start, end), "-", "00-00-0"))
 
       if (range_dttm[2] == Sys.Date()) {
@@ -64,21 +80,22 @@ import_sonabra <- function(id, start, end, stations, proxy) {
       ) %>%
       dplyr::group_by(id, data) %>%
       dplyr::summarise(
-        ppt = mean(prec, na.rm = TRUE),
+        ppt = mean(ppt, na.rm = TRUE),
         t_max = mean(t_max, na.rm = TRUE),
-        t_med = mean(t, na.rm = TRUE),
+        t_med = mean(t_med, na.rm = TRUE),
         t_min = mean(t_min, na.rm = TRUE),
-        ur_med = mean(rh, na.rm = TRUE),
+        ur_med = mean(ur_med, na.rm = TRUE),
         ins = mean(ins, na.rm = TRUE),
-        pa_med = mean(ap, na.rm = TRUE),
-        v_dir = mean(wd, na.rm = TRUE),
-        v_med = mean(ws, na.rm = TRUE)
+        neb = mean(neb, na.rm = TRUE),
+        pa_med = mean(pa_med, na.rm = TRUE),
+        v_dir = mean(v_dir, na.rm = TRUE),
+        v_med = mean(v_med, na.rm = TRUE)
       ) %>%
       dplyr::ungroup() %>%
       dplyr::mutate_if(is.double, round, digits = 1) %>%
       tidyr::replace_na(list(
         ppt = NA, t_max = NA, t_med = NA, t_min = NA,
-        ur_med = NA, ins = NA, pa_med = NA,
+        ur_med = NA, ins = NA, neb = NA,pa_med = NA,
         v_dir = NA, v_med = NA
       )) %>%
       dplyr::arrange(id, data) %>%

@@ -4,7 +4,7 @@
 \alias{aws_station}
 \title{Get basic information about INMET's automatic weather station}
 \usage{
-aws_station(only.br = TRUE, proxy = ".")
+aws_station(proxy = ".", only.br = TRUE)
 }
 \description{
 Get basic information about INMET's automatic weather station

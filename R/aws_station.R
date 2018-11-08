@@ -2,7 +2,7 @@
 #'
 #' @export
 #'
-aws_station <- function(only.br = TRUE, proxy = ".") {
+aws_station <- function(proxy = ".", only.br = TRUE) {
 
   txt_split <- "http://www.inmet.gov.br/sonabra/maps/pg_mapa.php" %>%
     rvest::html_session(proxy) %>%

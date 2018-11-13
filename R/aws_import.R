@@ -28,7 +28,7 @@ aws_import <- function(id, start, end, proxy = ".", stations = NULL) {
   end_date_time <- lubridate::ymd_hms(paste0(end, "-", end_hour, ":0:0"))
 
   if (is.null(stations)) {
-    stations <- cws_station(proxy = proxy) %>%
+    stations <- aws_station(proxy = proxy) %>%
       dplyr::filter(id %in% id_filter)
   } else {
     stations <- stations %>%

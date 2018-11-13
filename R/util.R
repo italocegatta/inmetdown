@@ -108,7 +108,7 @@ get_table_bdmep <- function(id, start, end, n_row, token, proxy) {
   con <- con_bdmep(proxy)
 
   param <- glue::glue(
-    "http://www.inmet.gov.br/projetos/rede/pesquisa/gera_serie_txt.php?&mRelEstacao={id}&btnProcesso=serie&mRelDtInicio={start_f}&mRelDtFim={end_f}&mAtributos=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,"
+    "http://www.inmet.gov.br/projetos/rede/pesquisa/gera_serie_txt.php?&mRelEstacao={id}&btnProcesso=serie&mRelDtInicio={end_f}&mRelDtFim={start_f}&mAtributos=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,"
   )
 
   txt <- try(get_txt_bdmep(con, param, token), silent = TRUE)

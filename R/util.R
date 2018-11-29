@@ -108,12 +108,12 @@ get_table_bdmep <- function(id, start, end, n_row, token, proxy) {
   con <- con_bdmep(proxy)
 
   param <- glue::glue(
-    "http://www.inmet.gov.br/projetos/rede/pesquisa/gera_serie_txt.php?&mRelEstacao={id}&btnProcesso=serie&mRelDtInicio={end_f}&mRelDtFim={start_f}&mAtributos=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,"
+    "http://www.inmet.gov.br/projetos/rede/pesquisa/gera_serie_txt.php?&mRelEstacao={id}&btnProcesso=serie&mRelDtInicio={start_f}&mRelDtFim={end_f}&mAtributos=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,"
   )
 
   txt <- try(get_txt_bdmep(con, param, token), silent = TRUE)
 
-  aux_error <- stringr::str_detect(txt, "Não.existem.dados.disponiveis.da.estação")
+  aux_error <- stringr::str_detect(txt, "disponiveis")
 
   if (inherits(txt, "try-error") | aux_error) {
 
@@ -184,10 +184,32 @@ get_txt_bdmep <- function(con, param, token) {
 
 table_if_error <- function(id, start, end, n_row) {
 
-  table <- as.data.frame(matrix(NA_real_, nrow = n_row, ncol = 11))
+  table <- as.data.frame(matrix(NA_real_, nrow = n_row, ncol = 19))
   table[ , 1] <- id
   table[ , 2] <- rep(seq(start, end, by = "day"), each = 2)
-  table[ , 3] <- c(0, 12) * 100
+  table[ , 3] <- c(0, 12, 18) * 100
+
+  names(table) <- c(
+    "Estacao",
+    "Data",
+    "Hora",
+    "Precipitacao",
+    "TempBulboSeco",
+    "TempBulboUmido",
+    "TempMaxima",
+    "Temp.Comp.Media",
+    "TempMinima",
+    "UmidadeRelativa",
+    "Umidade.Relativa.Media",
+    "PressaoAtmEstacao",
+    "PressaoAtmMar",
+    "DirecaoVento",
+    "VelocidadeVento",
+    "Velocidade.do.Vento.Media",
+    "Insolacao",
+    "Nebulosidade",
+    "Evaporacao.Piche"
+  )
 
   if (end == Sys.Date()) {
     table <- table[-nrow(table), ]

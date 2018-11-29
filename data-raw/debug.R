@@ -1,4 +1,18 @@
 
+# teste geral -------------------------------------------------------------
+
+library(inmetdown)
+aws_import("A108", Sys.Date() - 60, Sys.Date())
+
+cws_import("82994", Sys.Date() - 30, Sys.Date())
+cws_import("82915", Sys.Date() - 100, Sys.Date() - 95)
+
+x <- inmetdown:::import_bdmep("82915", Sys.Date() - 100, Sys.Date() - 95, stations = cws_station(), proxy = ".")
+
+#purrr::map(cws_station()$id %>% slice(head(n = 20), ~cws_import(.x, Sys.Date() - 100, Sys.Date() - 95, stations = cws_station()))
+
+writexl::write_xlsx(x, "variaveis_inmet_convencial.xlsx")
+
 # automatica --------------------------------------------------------------
 
 library(magrittr)
@@ -38,12 +52,15 @@ library(magrittr)
 load("R/sysdata.rda")
 source("R/util.R")
 
-id = "83064"
+id = "82915"
 id = c("82915", "82326")
-start = Sys.Date() - 190
-end = Sys.Date() - 180
+start = Sys.Date() - 100
+end = Sys.Date() - 95
 stations = inmetdown::cws_station()
 proxy = "."
 token = "^.+instruções\n--------------------\n"
+i = 1
+
+inmetdown:::import_bdmep(id, start, end, stations, proxy)
 
 inmetdown::cws_import(id, start, end, stations = stations) %>% View()

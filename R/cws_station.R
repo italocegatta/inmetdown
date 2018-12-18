@@ -13,15 +13,15 @@ cws_station <- function(proxy = ".") {
     '['(-1)
 
   id <- gsub(".*OMM: |<br>.*", "", txt_split)
-  state <- stringr::str_sub(gsub(".*label = '|';.*", "", txt_split), 1, 2)
-  city <- stringr::str_extract(gsub(".*<b>Estação: |<br>.*", "", txt_split), ".*(?=-)")
+  estado <- stringr::str_sub(gsub(".*label = '|';.*", "", txt_split), 1, 2)
+  municipio <- stringr::str_extract(gsub(".*<b>Estação: |<br>.*", "", txt_split), ".*(?=-)")
   lat <- as.numeric(gsub(".*Latitude: |º<br>.*", "", txt_split))
   lon <- as.numeric(gsub(".*Longitude: |º<br>.*", "", txt_split))
   alt <- readr::parse_number(gsub(".*Altitude: | metros.*", "", txt_split))
-  start <- lubridate::dmy(gsub(".*Aberta em: |<br>.*", "", txt_split))
+  inicio <- lubridate::dmy(gsub(".*Aberta em: |<br>.*", "", txt_split))
   url <- gsub(".*<br><a href=|= target=_new>.*",  "", txt_split)
 
   dplyr::data_frame(
-    id, state, city, lat, lon, alt, start, url
+    id, estado, municipio, lon, lat, alt, inicio, url
   )
 }

@@ -52,14 +52,18 @@ library(magrittr)
 load("R/sysdata.rda")
 source("R/util.R")
 
-id = "82915"
-id = c("82915", "82326")
-start = Sys.Date() - 100
-end = Sys.Date() - 95
-stations = inmetdown::cws_station()
-proxy = "."
+id = "83577"
+id = "82326"
+# id = c("82915", "82326")
+inicio = Sys.Date() - 100; start = inicio
+fim = Sys.Date() - 95; end = fim
+estacoes = inmetdown::inmet_estacoes()
+proxy = httr::use_proxy("201.6.149.20", 8080)
 token = "^.+instruções\n--------------------\n"
 i = 1
+
+inmetdown::inmet_download_bdmep( c("82915", "83577"), Sys.Date() - 100, Sys.Date() - 95) %>%
+  print(n = Inf)
 
 inmetdown:::import_bdmep(id, start, end, stations, proxy)
 

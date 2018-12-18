@@ -127,9 +127,10 @@ get_table_bdmep <- function(id, start, end, n_row, token, proxy) {
         stringr::str_replace("VelocidadeVentoInsolacao", "VelocidadeVento;Insolacao") %>%
         read.csv(text = ., header = T, sep = ";"),
       silent = TRUE
-    )
+    ) %>%
+      dplyr::mutate(Hora = Hora / 100)
 
-    if (inherits(txt, "try-error") | aux_error) {
+    if (inherits(table, "try-error")) {
 
       table <- table_if_error(id, start, end, n_row)
       return(dplyr::as_tibble(table))
@@ -137,7 +138,6 @@ get_table_bdmep <- function(id, start, end, n_row, token, proxy) {
     }
 
     table$X <- NULL
-    table <- tibble::as_tibble(table)
   }
 
   dplyr::as_tibble(table)
@@ -186,8 +186,8 @@ table_if_error <- function(id, start, end, n_row) {
 
   table <- as.data.frame(matrix(NA_real_, nrow = n_row, ncol = 19))
   table[ , 1] <- id
-  table[ , 2] <- rep(seq(start, end, by = "day"), each = 2)
-  table[ , 3] <- c(0, 12, 18) * 100
+  table[ , 2] <- rep(seq(start, end, by = "day"), each = 3)
+  table[ , 3] <- c(0, 12, 18)
 
   names(table) <- c(
     "Estacao",

@@ -2,12 +2,15 @@
 #'
 #' @export
 #'
-inmet_download_bdmep <- function(id, inicio, fim, estacoes = NULL, proxy = ".") {
+inmet_download_bdmep_convencional <- function(id, inicio, fim, estacoes = NULL, proxy = ".") {
+
+  inicio <- check_date(inicio)
+  fim <- check_date(fim)
 
   n_row <- as.numeric(fim - inicio + 1) * 3
 
   if (is.null(estacoes)) {
-    estacoes <- inmet_estacoes() %>%
+    estacoes <- inmet_estacoes(proxy) %>%
       dplyr::filter(id %in% !!id)
   } else {
     estacoes <- estacoes %>%

@@ -2,6 +2,18 @@
 # teste geral -------------------------------------------------------------
 
 library(inmetdown)
+
+est <- inmet_estacoes()
+
+inmet_download_sonabra_automatica("A108", Sys.Date() - 365, Sys.Date(), est)
+inmet_download_sonabra_automatica("A108", Sys.Date() - 370, Sys.Date(), est)
+
+inmet_download_sonabra_convencional("82994", Sys.Date() - 80, Sys.Date() - 75, est)
+
+inmet_download_bdmep_convencional("82000", Sys.Date() - 100, Sys.Date() - 95, est)
+
+
+
 aws_import("A108", Sys.Date() - 60, Sys.Date())
 
 cws_import("82994", Sys.Date() - 30, Sys.Date())

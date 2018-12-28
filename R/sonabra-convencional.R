@@ -80,6 +80,11 @@ inmet_download_sonabra_convencional <- function(id, inicio, fim, estacoes = NULL
     if (nrow(table) != as.numeric(fim - inicio + 1) * 3) {
 
       range_dttm <- range(table$date_time)
+
+      if (as.Date(range_dttm[2]) == Sys.Date()) {
+        lubridate::hour(range_dttm[2]) <- lubridate::hour(lubridate::now(tzone = "UTC"))
+      }
+
       seq_dttm <- data.frame(date_time = seq.POSIXt(range_dttm[1], range_dttm[2], 'hour')) %>%
         dplyr::filter(lubridate::hour(date_time) %in% c(0, 12, 18)) %>%
         dplyr::mutate(
@@ -88,7 +93,7 @@ inmet_download_sonabra_convencional <- function(id, inicio, fim, estacoes = NULL
           hora = lubridate::hour(date_time)
         )
 
-      table <- dplyr::full_join(table, seq_dttm, by = c("id", "data", "hora", "date_time"))
+      table <- dplyr::full_join(table, seq_dttm, by = c("data", "hora", "date_time"))
 #
 #       range_dttm <- lubridate::ymd_hms(paste0(c(inicio, fim), "-", "00-00-0"))
 #
@@ -112,6 +117,7 @@ inmet_download_sonabra_convencional <- function(id, inicio, fim, estacoes = NULL
         ppt, t_max, t_med, t_min,
         ur_med, pa_med, v_dir, v_med, ins, neb
       ) %>%
+      dplyr::mutate_if(is.double, round, digits = 4) %>%
       dplyr::arrange(id, data) %>%
       dplyr::as_tibble()
   }

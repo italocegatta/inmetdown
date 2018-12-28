@@ -8,7 +8,7 @@ est <- inmet_estacoes()
 inmet_download_sonabra_automatica("A108", Sys.Date() - 365, Sys.Date(), est)
 inmet_download_sonabra_automatica("A108", Sys.Date() - 370, Sys.Date(), est)
 
-inmet_download_sonabra_convencional("82994", Sys.Date() - 80, Sys.Date() - 75, est)
+inmet_download_sonabra_convencional("83235", Sys.Date() - 80, Sys.Date() - 5, est)
 
 inmet_download_bdmep_convencional("82000", Sys.Date() - 100, Sys.Date() - 95, est)
 
@@ -48,14 +48,14 @@ library(magrittr)
 load("R/sysdata.rda")
 source("R/util.R")
 
-id = "82336"
+id = "83235"
 id = c("82915", "82326")
-start = Sys.Date() - 10
-end = Sys.Date() - 1
-stations = inmetdown::cws_station()
+inicio = Sys.Date() - 20
+fim = Sys.Date()
+estacoes = inmetdown::inmet_estacoes()
 proxy = "."
 
-inmetdown::cws_import(id, start, end, stations = stations)
+inmetdown::inmet_download_sonabra_convencional(id, inicio, fim, estacoes = estacoes)
 
 
 # bdmep --------------------------------------------------------------

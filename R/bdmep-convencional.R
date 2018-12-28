@@ -30,10 +30,10 @@ inmet_download_bdmep_convencional <- function(id, inicio, fim, estacoes = NULL, 
         data = Data,
         hora = Hora,
         ppt = Precipitacao,
-        t_bs = TempBulboSeco,
         t_bu = TempBulboUmido,
         t_max = TempMaxima,
-        t_med = Temp.Comp.Media,
+        t_med = TempBulboSeco,
+        t_med_com = Temp.Comp.Media,
         t_min = TempMinima,
         ur_med = UmidadeRelativa,
         ur_med_comp = Umidade.Relativa.Media,
@@ -61,6 +61,11 @@ inmet_download_bdmep_convencional <- function(id, inicio, fim, estacoes = NULL, 
     if (nrow(table) != as.numeric(fim - inicio + 1) * 3) { # ponto fragil. deve testar para o hora final nas etapas 0, 12 e 18h
 
       range_dttm <- range(table$date_time)
+
+      if (as.Date(range_dttm[2]) == Sys.Date()) {
+        lubridate::hour(range_dttm[2]) <- lubridate::hour(lubridate::now(tzone = "UTC"))
+      }
+
       seq_dttm <- data.frame(date_time = seq.POSIXt(range_dttm[1], range_dttm[2], 'hour')) %>%
         dplyr::filter(lubridate::hour(date_time) %in% c(0, 12, 18)) %>%
         dplyr::mutate(

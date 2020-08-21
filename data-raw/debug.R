@@ -10,15 +10,16 @@ end = "2020-01-01"
 station = "83049"
 station = "82376"
 station = "A001"
+
 library(inmetdown)
 
-cad <- inmet_estacoes()
+cad <- inmet_station()
 out <- list()
 i=1
-603
+i =603
 625
 
-for (i in seq_along(cad$CD_ESTACAO)[-(1:625)]) {
+for (i in seq_along(cad$CD_ESTACAO)[600:630]) {
 
   out[[i]] <- inmet_import(
     cad$CD_ESTACAO[[i]],
@@ -28,7 +29,6 @@ for (i in seq_along(cad$CD_ESTACAO)[-(1:625)]) {
 
   print(stringr::str_glue("{i}/{nrow(cad)} - {format( Sys.time(), '%H:%M')}"))
 
-  Sys.sleep(1)
 }
 
 head(out)

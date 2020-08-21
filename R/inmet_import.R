@@ -13,7 +13,7 @@ inmet_import <- function(station, start, end) {
 
   ..get <- polite_GET(..req)
 
-  if (httr::status_code(..get) != 200) stop("Connection problem", call. = FALSE)
+  if (httr::status_code(..get) != 200) return(NULL)
 
   ..content <- httr::content(..get, type = "text", encoding = "UTF-8")
 

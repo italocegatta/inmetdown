@@ -14,7 +14,7 @@ test_that("check_date parse", {
   expect_equal(check_date(x5), as.Date(x5, "%Y.%m.%d"))
 })
 
-test_that("check_date 90 days", {
-  x1 <- Sys.Date()
-  expect_error(check_date(x1 - 91))
-})
+# test_that("check_date 90 days", {
+#   x1 <- Sys.Date()
+#   expect_error(check_date(x1 - 91))
+# })

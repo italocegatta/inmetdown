@@ -1,4 +1,44 @@
 
+# nova api ----------------------------------------------------------------
+
+library(magrittr)
+
+source("R/util.R")
+
+start = "2020-01-01"
+end = "2020-01-01"
+station = "83049"
+station = "82376"
+station = "A001"
+library(inmetdown)
+
+cad <- inmet_estacoes()
+out <- list()
+i=1
+603
+625
+
+for (i in seq_along(cad$CD_ESTACAO)[-(1:625)]) {
+
+  out[[i]] <- inmet_import(
+    cad$CD_ESTACAO[[i]],
+    "2020-08-20",
+    "2020-08-20"
+  )
+
+  print(stringr::str_glue("{i}/{nrow(cad)} - {format( Sys.time(), '%H:%M')}"))
+
+  Sys.sleep(1)
+}
+
+head(out)
+
+dplyr::bind_rows(out) %>%
+  dplyr::distinct(HR_MEDICAO) %>%
+  View()
+
+View(dplyr::bind_rows(out))
+
 # teste geral -------------------------------------------------------------
 
 library(inmetdown)

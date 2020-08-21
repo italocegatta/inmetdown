@@ -1,16 +1,15 @@
-#' Cadastro de estacoes disponiveis
+#' INMET Weather Stations
 #'
 #' @export
 #'
-
-inmet_estacoes <- function() {
+inmet_station <- function() {
 
   httr::GET("https://mapas.inmet.gov.br/estacoes.json") %>%
     httr::content(type = "text", encoding = "UTF-8") %>%
     jsonlite::fromJSON() %>%
     '[['("features") %>%
     '[['("properties") %>%
-    tibble::as_tibble() %>%
+    dplyr::as_tibble() %>%
     dplyr::mutate(
       dplyr::across(c(VL_LATITUDE, VL_LONGITUDE, VL_ALTITUDE), as.numeric),
       DT_INICIO_OPERACAO = as.Date(lubridate::ymd_hms(DT_INICIO_OPERACAO)),

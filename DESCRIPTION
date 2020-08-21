@@ -1,21 +1,20 @@
 Package: inmetdown
 Title: An R package to import data from INMET's weather stations
-Version: 0.0.3
+Version: 0.1.0
 Authors@R: c(
-  person("Italo", "Cegatta", email = "italocegatta@gmail.com", role = c("aut", "cre")),
-  person("Suzano Papel e Celulose", role = "cph")
+  person("Italo", "Cegatta", email = "italocegatta@gmail.com", role = c("aut", "cre"))
   )
 Description: An R package to import data from INMET's weather stations.
 Depends: R (>= 3.3.0)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.1
-Imports: xml2,
-    rvest,
+RoxygenNote: 7.1.1
+Imports:
     dplyr,
-    tidyr,
     lubridate,
     stringr,
-    readr
+    jsonlite,
+    httr,
+    polite
 Suggests: testthat

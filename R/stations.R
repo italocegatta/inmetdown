@@ -4,8 +4,9 @@
 #'
 inmet_station <- function() {
 
-  httr::GET("https://mapas.inmet.gov.br/estacoes.json") %>%
+  httr::GET("https://mapas.inmet.gov.br/assets/js/estacao.js") %>%
     httr::content(type = "text", encoding = "UTF-8") %>%
+     stringr::str_remove("var estacao = \n") %>%
     jsonlite::fromJSON() %>%
     '[['("features") %>%
     '[['("properties") %>%

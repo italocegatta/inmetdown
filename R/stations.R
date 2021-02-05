@@ -2,9 +2,9 @@
 #'
 #' @export
 #'
-inmet_station <- function() {
+inmet_station <- function(proxy = "") {
 
-  httr::GET("https://mapas.inmet.gov.br/assets/js/estacao.js") %>%
+  httr::GET("https://mapas.inmet.gov.br/assets/js/estacao.js", proxy = proxy) %>%
     httr::content(type = "text", encoding = "UTF-8") %>%
      stringr::str_remove("var estacao = \n") %>%
     jsonlite::fromJSON() %>%

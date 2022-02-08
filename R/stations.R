@@ -1,4 +1,8 @@
-function (proxy = "") 
+#' INMET Weather Stations
+#'
+#' @export
+#'
+inmet_station <- function (proxy = "") 
 {
   tab_estacoes_m <- httr::GET("https://apitempo.inmet.gov.br/estacoes/M") %>% 
     httr::content(type = "text", encoding = "UTF-8") %>% 
